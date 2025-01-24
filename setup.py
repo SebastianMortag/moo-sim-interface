@@ -1,0 +1,35 @@
+from setuptools import setup
+
+long_description = """
+moo-sim-interface
+====
+
+moo-sim-interface is a Python package for the simulation of Modelica-based models, either as FMUs `Functional Mock-up Units
+<https://fmi-standard.org/>` or using the OpenModelica or Dymola Python APIs. It allows for easily configurable simulation
+setup, execution and evaluation via a generic text-based interface. Its main purpose is parallelization of simulations
+and parameter sweeps. Furthermore, it provides a generic interface for Multi-Objective-Optimization.
+"""
+
+packages = [
+    'moo_sim_interface'
+]
+
+install_requires = [
+    'fmpy',
+    'dask[bag]',
+    'numpy',
+    'PyYAML'
+]
+
+setup(name='moo_sim_interface',
+      version='0.3.0',
+      description='A generic interface for Modelica/FMU simulation and optimization',
+      long_description=long_description,
+      author='Sebastian Mortag',
+      author_email='mortag@hm.edu',
+      url='https://github.com/SebastianMortag/moo-sim-interface',
+      license='MIT',
+      packages=packages,
+      python_requires='>=3.9',
+      install_requires=install_requires,
+      entry_points={'console_scripts': ['sim_fmu=moo_sim_interface.simulator_api:main']})

@@ -1,0 +1,75 @@
+# This file is the central place to define your simulation setup.
+# It is used by the simulation runner to create the simulation environment and to run the simulation.
+
+version: 0.3 # The version of the package this .yml file corresponds to.
+
+# Simulation environment: Either FMU, OpenModelica or Dymola. WiP: Matlab/Simulink
+simulation_environment: FMU
+
+# Model File: The filename of the package or FMU containing the model. FMUs must be located in the "fmus" directory.
+model_file: examples/PV_Battery_Heat_System.Example_System.fmu # alternatively: provide an absolute path to the .mo or .fmu file
+
+# Name and path of the model within the Model file
+model_name: # For fmus containing one model, can be empty
+solver: # solver/method, FMUs support only cvode and euler, leave empty to use the default solver
+
+simulator_path: # Path to the simulator installation, can be empty if Model file is an FMU
+
+run_init_scripts: [ ] # run scripts ahead of the simulation, load libraries, etc.
+
+n_chunks: 10 # Number of chunks to divide the workload (parallel processing). Choose 1 to disable parallel processing.
+
+# Simulation Setup: The parameters are used to configure the simulation environment.
+simulation_setup:
+  start_time: 0.0
+  stop_time: 31536000 # 1 year in seconds
+  step_size: 360 # interval length of the simulation, choose EITHER step_size OR num_of_steps
+  num_of_steps: 0.0 # Max Samples, determines the number of results
+  tolerance: 0.000001
+
+  input_configuration:
+    # list of variable names to be modified during the simulation
+    variable_names: [ My_House.pv_system.pv_area, My_House.battery_system.capacity ]
+    # list of variable values to be applied to the variables defined in variable_names or a range: min:step:max (inclusive)
+    variable_values: [ 100:100:1000, 10:10:100 ] # please note the list of lists syntax
+    # Create a Meshgrid of the variable_values and evaluate the model for each pairwise combination
+    pairwise: True
+
+  output_configuration:
+    # list of variable names to be returned after the simulation
+    variable_names: [ My_House.calc_local_autarky.local_autarky, My_House.calc_overall_autarky.overall_autarky ]
+    # apply functions to the simulation results, for example compute the mean a variable over the simulation time
+    # available are: take_last, 1-take_last, mean, average, median, min, max, sum, std, var or None (return all values)
+    result_transformation: take_last # alternatively: supply a list of functions, one for each output variable
+
+# Post Simulation Options: The post simulation options are used to process the data after successful simulations.
+post_simulation_options:
+  # save the results, either as csv or txt file or None (do not save)
+  save_results_options: csv # csv, txt, None
+  print_results: False # print the results to the console after all simulations are finished
+
+fmu_settings: # these settings apply only when FMU is selected as simulation environment
+  # Simulation type: Co-Simulation and Model Exchange are supported. If None, use the fmus default simulation type.
+  simulation_type: Co-Simulation
+  sync: False # synchronized execution (for debugging)
+  show_progressbar: True # Show a progressbar for parallel processing
+  # Print the progress of each simulation every full (s)econd, (m)inute, (h)our, (d)ay. Choose None to disable.
+  print_single_simulation_progress: None
+
+  # Save the final value of every available simulation variable to a separate .json file
+  save_all_simulation_variables: False
+  variables_regex_filter: None # a regex statement to filter the variables by name or None (include all variables)
+  filter_mode: include # include or exclude the variables matched by variables_regex_filter
+
+
+experimental_mode_on: False
+experimental_options:
+  plot_results: False # plot the results as x-y pairs if two output variables are defined
+  plot_results_lib: plotly # choose between plotly and matplotlib
+  custom_result_transformation: None # supply a custom numpy function to transform the results, example: np.quantile(x, 0.99, axis=0)
+  # 0: Off, 1: mark failed simulations and continue, 2: stop all simulations on first failure, 3: retry failed
+  # simulations with varying input values by 1e-3% to 1e-7%, 4: run a different configuration file for each failed simulation
+  safe_mode_type: 0
+  alternative_config_file: None # Path to alternative configuration file
+  input_csv: None # Path to input CSV file //not implemented yet
+  skip_configuration_check: False # Don't check this configuration file for errors
