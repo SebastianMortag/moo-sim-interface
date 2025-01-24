@@ -19,6 +19,8 @@ install_requires = [
     'dask[bag]',
     'numpy',
     'PyYAML'
+    'plotly'
+    'matplotlib'
 ]
 
 setup(name='moo_sim_interface',
