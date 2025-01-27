@@ -132,5 +132,5 @@ For example: ```model.simulate(simflags='-lv=-LOG_SUCCESS')```
 * Select custom folders for OM/Dymola result files
 * Run OM simulations in parallel (WiP)
 * Inject LOG messages suppression into the simulation apis
-* Implement safe mode for automatic simulation error handling for PM and Dymola
+* Implement safe mode for automatic simulation error handling for OM and Dymola
 * Implement input and output parameter configuration using a csv file
