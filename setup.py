@@ -30,6 +30,6 @@ setup(name='moo_sim_interface',
       url='https://github.com/SebastianMortag/moo-sim-interface',
       license='MIT',
       packages=packages,
-      python_requires='>=3.9',
+      python_requires='>=3.10',
       install_requires=install_requires,
       entry_points={'console_scripts': ['run_sim=moo_sim_interface.simulator_api:main']})

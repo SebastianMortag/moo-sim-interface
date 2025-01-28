@@ -43,7 +43,7 @@ Launch the simulations using the following command, which will output the result
 
 ### Requirements
 
-- Python 3.9 or higher
+- Python 3.10 or higher
 - Numpy 2.2.0 or higher
 - dask 2024.7.1 or higher
 - PyYAML 6.0.0 or higher
