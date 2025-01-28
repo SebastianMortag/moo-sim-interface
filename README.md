@@ -6,18 +6,18 @@ and parameter sweeps. Furthermore, it provides a generic interface for Multi-Obj
 
 ## Usage
 
-The key idea is to provide a single configuration file in YAML format, which contains the necessary information to set up and run the simulations.  
-To _get started_, it is recommended to copy one of the provided examples and adjust it to your needs.  
+The key idea is to provide a single configuration file in YAML format, which contains the necessary information to set up and run the simulations.
+To _get started_, it is recommended to copy one of the provided examples and adjust it to your needs.
 
-The tool can be used either as a command line tool via:  
+The tool can be used either as a command line tool via:
 
-```run_sim -h``` to access the help menu and  
+```run_sim -h``` to access the help menu and
 ```run_sim -f sim_config_file``` to run the simulations defined in the configuration file.
 
-**or** as a python package by importing the module and calling the function:  
+**or** as a python package by importing the module and calling the function:
 
 ```python
-from moo_sim_interface.simulator_api import run_simulations   
+from moo_sim_interface.simulator_api import run_simulations
 run_simulations(sim_config_file)
 ```
 
@@ -25,9 +25,9 @@ When working with relative paths, configuration files and FMU files should be lo
 
 ## Example
 
-Here is an example of how to run a parameter sweep in parallel using a FMU model:    
-Download the 'configs' and 'fmus' folders containing the examples and place them within your current working directory.  
-Launch the simulations using the following command, which will output the results into a csv file:  
+Here is an example of how to run a parameter sweep in parallel using a FMU model:
+Download the 'configs' and 'fmus' folders containing the examples and place them within your current working directory.
+Launch the simulations using the following command, which will output the results into a csv file:
 
 ```run_sim -f pv_heat_example_config.yml```
 
@@ -44,9 +44,16 @@ Launch the simulations using the following command, which will output the result
 ### Requirements
 
 - Python 3.9 or higher
-- FMPy 0.3.15 or higher
-- dask 2023.7.1 or higher
-- PyYAML 6.0.1 or higher
+- Numpy 2.2.0 or higher
+- dask 2024.7.1 or higher
+- PyYAML 6.0.0 or higher
+- Plotly 5.15.0 or higher
+- Matplotlib 3.7.0 or higher
+
+
+- FMPy 0.3.22 or higher (for FMU simulations)
+- OMPython 3.4.0 or higher (for OpenModelica simulations)
+- Dymola 2022 or higher (for Dymola simulations)
 
 ## Hints
 
@@ -74,7 +81,7 @@ _Tools->Options->FMI_
 
 **Include Resources in the fmu:**
 
-In some cases, generating the fmu file fails when adding files as input resources.  
+In some cases, generating the fmu file fails when adding files as input resources.
 Go to _OpenModelica->Tools->Options->General->Working Directory_ and choose a short path i.e. _C:/OMEdit_
 
 ### Dymola FMU Export
@@ -89,23 +96,23 @@ _Simulation Setup->FMI Export_
     - [x] Copy resources to FMU
     - [x] FMU needs no license key
 
-Running FMUs requires access to the Runtime-Licence, this is not possible if the licence is managed by a DSLS Server. See chapter _Limitations_ in the Dymola User Manual.  
+Running FMUs requires access to the Runtime-Licence, this is not possible if the licence is managed by a DSLS Server. See chapter _Limitations_ in the Dymola User Manual.
 In order to export FMUs with Dymola, which require no license key, your licence must allow for binary model export.
 
 **Parameter Evaluation:**
 
-Activate **Evaluate parameters to reduce models** in _Simulation Setup->Translation_  
-This leads to the output of the model being fixed since parameters become constants, but simulation time is reduced.  
+Activate **Evaluate parameters to reduce models** in _Simulation Setup->Translation_
+This leads to the output of the model being fixed since parameters become constants, but simulation time is reduced.
 Can be used to simulate poorly parameterized models, since singularities at t=0 can occur when the initial values are
-not set correctly. This sets the flag _Evaluate=false_ in the uses Annotations of the Modelica file.  
+not set correctly. This sets the flag _Evaluate=false_ in the uses Annotations of the Modelica file.
 Parameters that are evaluated (symbolically) bevor the FMU is simulated, are marked as **constant** in the FMU. Their
 values con no longer be changed.
 To exclude specific parameters from the evaluation, add `annotation (Evaluate=false)` to the parameter declaration.
 If the declaration is in an unmodifiable submodule, propagate the parameter into a modifiable submodule and add the
-annotation there.  
+annotation there.
 
-**Maximum Simulation Run Time:**  
-(From Dymola User Manual 2B, p.22)  
+**Maximum Simulation Run Time:**
+(From Dymola User Manual 2B, p.22)
 
 Go to _Simulation Setup->General->Max simulation run time->Per simulation_ and specify the maximum (real) time in
 seconds that a simulation is allowed to run. If the simulation time exceeds this value, the simulation is aborted.
@@ -114,15 +121,15 @@ seconds that a simulation is allowed to run. If the simulation time exceeds this
 
 **Disable LOG Messages:**
 
-Various options exist to disable log messages in OpenModelica.  
+Various options exist to disable log messages in OpenModelica.
 
 _Command Line Options (e.g. Translation Flags):_
-* ```--demoMode``` Disable Info messages when loading a model, Warnings, like Lexer, are still displayed  
-For example: ```ModelicaSystem(model_path, model_name, commandLineOptions='--demoMode')```  
-* ```-q``` Silent mode, purpose unknown  
+* ```--demoMode``` Disable Info messages when loading a model, Warnings, like Lexer, are still displayed
+For example: ```ModelicaSystem(model_path, model_name, commandLineOptions='--demoMode')```
+* ```-q``` Silent mode, purpose unknown
 
 _Simulations Flags:_
-* ```-lv=-LOG_SUCCESS``` Disable messages like "Simulation finished successfully"  
+* ```-lv=-LOG_SUCCESS``` Disable messages like "Simulation finished successfully"
 For example: ```model.simulate(simflags='-lv=-LOG_SUCCESS')```
 * ```-lv=-stdout``` Disable all messages, **not functional**
 * ```-noEventEmit``` Purpose unknown

@@ -11,22 +11,22 @@ from dask import bag
 from moo_sim_interface.utils.dependency_installer import install_openmodelica_package
 from moo_sim_interface.utils.post_simulation_data_processor import PostSimulationDataProcessor
 from moo_sim_interface.utils.yaml_config_parser import prepare_simulation_environment
-from dask.diagnostics import ProgressBar
+# from dask.diagnostics import ProgressBar
+from importlib.metadata import version
+from importlib.util import find_spec
 
 
 def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
-    try:
-        from OMPython import ModelicaSystem
-        from moo_sim_interface.utils.OMPythonFast import ModelicaSystemFast
-    except ModuleNotFoundError:
+    if find_spec('OMPython') is None:
         # try to install the OMPython package
         simulator_path = args.get('simulator_path')
         install_openmodelica_package(simulator_path)
-        from OMPython import ModelicaSystem
-        from moo_sim_interface.utils.OMPythonFast import ModelicaSystemFast
 
     (model_filename, model_path, input_values, input_variable_names, num_chunks, output_variable_names, sync_execution,
      time_modulo, result_transformation) = prepare_simulation_environment(args)
+
+    if version("OMPython") > "3.4.9":
+        model_path = model_path.as_posix()
 
     post_simulation_data_processor = PostSimulationDataProcessor(args.get('post_simulation_options'), [])
     sim_params = args.get('simulation_setup')
@@ -51,6 +51,7 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
     indices = list(np.ndindex(input_values[0].shape if len(input_values) > 0 else (1,)))
 
     if num_chunks == 1:
+        from moo_sim_interface.utils.OMPythonFast import ModelicaSystemFast
         model = ModelicaSystemFast(model_path, model_name, commandLineOptions='--demoMode')
         combined_results = run_simulation_in_order(final_names, indices, initial_names, input_values, method, model,
                                                    start_time, step_size, stop_time, tolerance, result_transformation)
@@ -126,7 +127,8 @@ def simulation_wrapper_function(*args):
         result_file = construct_resultfile_name(model_name, i)
 
         sim_options = (
-            f'startTime={start_time},stopTime={stop_time},stepSize={step_size},tolerance={tolerance},solver=\"{method}\"')
+            f'startTime={start_time},stopTime={stop_time},stepSize={step_size},'
+            f'tolerance={tolerance},solver=\"{method}\"')
 
         values1 = ','.join("%s=%s" % (key, val) for (key, val) in zip(initial_names, initial_values))
         override = " -override=" + values1 + ',' + sim_options

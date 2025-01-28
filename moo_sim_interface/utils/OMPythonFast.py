@@ -1,7 +1,7 @@
 import os
 
-import numpy as np
 from OMPython import ModelicaSystem
+
 
 class ModelicaSystemFast(ModelicaSystem):
     def getSolutions(self, varList=None, resultfile=None):  # 12
@@ -25,15 +25,15 @@ class ModelicaSystemFast(ModelicaSystem):
         if (not os.path.exists(resFile)):
             print("Error: Result file does not exist")
             return
-            #exit()
+            # exit()
         else:
             if (varList == None):
                 # validSolution = ['time'] + self.__getInputNames() + self.__getContinuousNames() + self.__getParameterNames()
                 validSolution = self.getconn.sendExpression("readSimulationResultVars(\"" + resFile + "\")")
                 self.getconn.sendExpression("closeSimulationResultFile()")
                 return validSolution
-            elif (isinstance(varList,str)):
-                if (varList not in [l["name"] for l in self.quantitiesList] and varList!="time"):
+            elif (isinstance(varList, str)):
+                if (varList not in [l["name"] for l in self.quantitiesList] and varList != "time"):
                     print('!!! ', varList, ' does not exist\n')
                     return
                 exp = "readSimulationResult(\"" + resFile + '",{' + varList + "})"
@@ -42,7 +42,7 @@ class ModelicaSystemFast(ModelicaSystem):
                 self.getconn.sendExpression(exp2)
                 return res
             elif (isinstance(varList, list)):
-                #varList, = varList
+                # varList, = varList
                 for v in varList:
                     if v == "time":
                         continue
