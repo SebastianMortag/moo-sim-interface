@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 long_description = """
 moo-sim-interface
@@ -9,8 +9,6 @@ Units <https://fmi-standard.org/>` or using the OpenModelica or Dymola Python AP
 simulation setup, execution and evaluation via a generic text-based interface. Its main purpose is parallelization of
 simulations and parameter sweeps. Furthermore, it provides a generic interface for Multi-Objective-Optimization.
 """
-
-packages = ['moo_sim_interface']
 
 install_requires = ['fmpy', 'dask[bag]', 'numpy', 'PyYAML', 'plotly', 'matplotlib']
 
@@ -29,7 +27,7 @@ setup(name='moo_sim_interface',
       author_email='mortag@hm.edu',
       url='https://github.com/SebastianMortag/moo-sim-interface',
       license='MIT',
-      packages=packages,
+      packages=find_packages(),
       python_requires='>=3.10',
       install_requires=install_requires,
       entry_points={'console_scripts': ['run_sim=moo_sim_interface.simulator_api:main']})
