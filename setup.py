@@ -12,7 +12,7 @@ simulations and parameter sweeps. Furthermore, it provides a generic interface f
 
 packages = ['moo_sim_interface']
 
-install_requires = ['fmpy', 'dask[bag]', 'numpy', 'PyYAML', 'plotly', 'matplotlib']
+install_requires = ['fmpy', 'dask[bag]', 'numpy', 'PyYAML', 'plotly', 'matplotlib', 'requests']
 
 extras_require = {
     'develop': ['pytest', 'pytest-cov', 'flake8', 'pre-commit'],

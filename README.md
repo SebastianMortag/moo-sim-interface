@@ -52,7 +52,7 @@ Launch the simulations using the following command, which will output the result
 
 
 - FMPy 0.3.22 or higher (for FMU simulations)
-- OMPython 3.4.0 or higher (for OpenModelica simulations)
+- OMPython 3.6.0 or higher (for OpenModelica simulations)
 - Dymola 2022 or higher (for Dymola simulations)
 
 ## Hints
@@ -123,16 +123,17 @@ seconds that a simulation is allowed to run. If the simulation time exceeds this
 
 Various options exist to disable log messages in OpenModelica.
 
-_Command Line Options (e.g. Translation Flags):_
-* ```--demoMode``` Disable Info messages when loading a model, Warnings, like Lexer, are still displayed
+_Command Line Options (e.g. Compiler Flags for omc):_
+* ```--demoMode``` Disable Info messages when loading a model. Warnings, like Lexer, are still displayed
 For example: ```ModelicaSystem(model_path, model_name, commandLineOptions='--demoMode')```
 * ```-q``` Silent mode, purpose unknown
 
-_Simulations Flags:_
+_Simulations Flags (C Runtime Simulation Flags):_
 * ```-lv=-LOG_SUCCESS``` Disable messages like "Simulation finished successfully"
 For example: ```model.simulate(simflags='-lv=-LOG_SUCCESS')```
-* ```-lv=-stdout``` Disable all messages, **not functional**
-* ```-noEventEmit``` Purpose unknown
+* ```-lv=-stdout``` Disable all messages written to stdout
+* ```-lv=-assert``` Disable all assert messages of type Info
+For OpenModelica v1.21 and below please use: ```-LOG_STDOUT``` and ```-LOG_ASSERT```
 
 ## Planned Features
 * Auto-remove OM/Dymola result files after successful simulations
