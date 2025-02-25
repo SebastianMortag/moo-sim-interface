@@ -5,3 +5,4 @@ dask~=2024.12.1
 FMPy~=0.3.22
 plotly~=5.15.0
 matplotlib~=3.7.2
+requests~=2.32.0

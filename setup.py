@@ -10,7 +10,9 @@ simulation setup, execution and evaluation via a generic text-based interface. I
 simulations and parameter sweeps. Furthermore, it provides a generic interface for Multi-Objective-Optimization.
 """
 
-install_requires = ['fmpy', 'dask[bag]', 'numpy', 'PyYAML', 'plotly', 'matplotlib']
+packages = ['moo_sim_interface']
+
+install_requires = ['fmpy', 'dask[bag]', 'numpy', 'PyYAML', 'plotly', 'matplotlib', 'requests']
 
 extras_require = {
     'develop': ['pytest', 'pytest-cov', 'flake8', 'pre-commit'],
@@ -20,7 +22,7 @@ extras_require = {
 }
 
 setup(name='moo_sim_interface',
-      version='0.3.0',
+      version='0.3.2',
       description='A generic interface for Modelica/FMU simulation and optimization',
       long_description=long_description,
       author='Sebastian Mortag',

@@ -1,19 +1,18 @@
-import contextlib
+import multiprocessing
 import os
 import shutil
 import subprocess
 import tempfile
 import uuid
+from importlib.metadata import version
+from importlib.util import find_spec
 from typing import Union
+
 import numpy as np
-from dask import bag
 
 from moo_sim_interface.utils.dependency_installer import install_openmodelica_package
 from moo_sim_interface.utils.post_simulation_data_processor import PostSimulationDataProcessor
 from moo_sim_interface.utils.yaml_config_parser import prepare_simulation_environment
-# from dask.diagnostics import ProgressBar
-from importlib.metadata import version
-from importlib.util import find_spec
 
 
 def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
@@ -22,13 +21,15 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
         simulator_path = args.get('simulator_path')
         install_openmodelica_package(simulator_path)
 
-    (model_filename, model_path, input_values, input_variable_names, num_chunks, output_variable_names, sync_execution,
+    (model_filename, model_path, input_values, input_names, num_chunks, final_names, sync_execution,
      time_modulo, result_transformation) = prepare_simulation_environment(args)
 
     if version("OMPython") > "3.4.9":
         model_path = model_path.as_posix()
 
     post_simulation_data_processor = PostSimulationDataProcessor(args.get('post_simulation_options'), [])
+    pre_sim_scripts = args.get('pre_sim_scripts')
+    post_sim_scripts = args.get('post_sim_scripts')
     sim_params = args.get('simulation_setup')
     model_name = args.get('model_name')
 
@@ -45,21 +46,30 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
         step_size = (stop_time - start_time) / number_of_intervals
     method = args.get('solver')
     tolerance = sim_params.get('tolerance')
-    initial_names = sim_params.get('input_configuration').get('variable_names')
-    final_names = sim_params.get('output_configuration').get('variable_names')
 
     indices = list(np.ndindex(input_values[0].shape if len(input_values) > 0 else (1,)))
 
     if num_chunks == 1:
         from moo_sim_interface.utils.OMPythonFast import ModelicaSystemFast
         model = ModelicaSystemFast(model_path, model_name, commandLineOptions='--demoMode')
-        combined_results = run_simulation_in_order(final_names, indices, initial_names, input_values, method, model,
+        for script in pre_sim_scripts:
+            res = model.getconn.execute("runScript(\"" + script + "\")")
+            if res == "Failed":
+                print(f'Failed to execute script: {script}')
+
+        combined_results = run_simulation_in_order(final_names, indices, input_names, input_values, method, model,
                                                    start_time, step_size, stop_time, tolerance, result_transformation)
+
+        for script in post_sim_scripts:
+            res = model.getconn.execute("runScript(\"" + script + "\")")
+            if res == "Failed":
+                print(f'Failed to execute script: {script}')
+
     else:
-        combined_results = run_simulation_in_parallel(final_names, indices, initial_names, input_values, method,
-                                                      model_path, model_name,
-                                                      start_time, step_size, stop_time, tolerance, num_chunks,
-                                                      sim_params, result_transformation)
+        combined_results = run_simulation_in_parallel(final_names, indices, input_names, input_values, method,
+                                                      model_path, model_name, start_time, step_size, stop_time,
+                                                      tolerance, num_chunks, sim_params, result_transformation,
+                                                      pre_sim_scripts, post_sim_scripts)
 
     processed_results = post_simulation_data_processor.do_post_processing(args, input_values, combined_results,
                                                                           model_name, return_results=return_results)
@@ -79,24 +89,78 @@ def run_simulation_in_order(final_names, indices, initial_names, input_values, m
             [f'startTime={start_time}', f'stopTime={stop_time}', f'stepSize={step_size}', f'solver={method}',
              f'tolerance={tolerance}'])
         model.simulate()  # simflags='-noEventEmit'
+        # model.simulate(simflags='-lv=-assert,-stdout')  # simflags='-noEventEmit'
         results = model.getSolutions(final_names)
 
         combined_results.append([(i, result_transformation(results))])
-        combined_results.append([])  # placeholder for all variables results
+        combined_results.append([])  # placeholder for all parameters results
     return combined_results
 
 
 def run_simulation_in_parallel(final_names, indices, initial_names, input_values, method, model_path, model_name,
-                               start_time, step_size,
-                               stop_time, tolerance, num_chunks, sim_params, result_transformation):
+                               start_time, step_size, stop_time, tolerance, num_chunks, sim_params,
+                               result_transformation, pre_sim_scripts, post_sim_scripts):
     print(f'Running simulation in parallel with {num_chunks} chunks.')
-    # with (ProgressBar() if sim_params.get('show_progressbar') else contextlib.nullcontext()):
-    with (contextlib.nullcontext()):
-        dask_bag = bag.from_sequence(indices, npartitions=num_chunks)
-        combined_results = dask_bag.map_partitions(simulation_wrapper_function, initial_names, input_values,
-                                                   final_names, method, model_path, model_name, start_time,
-                                                   step_size, stop_time, tolerance, result_transformation).compute()
-    return combined_results
+
+    process_list = [create_omc_process(index, model_path, model_name, start_time, stop_time, step_size, method,
+                                       tolerance, pre_sim_scripts, dict(zip(initial_names, [values[index] for values in
+                                                                                            input_values]))) for
+                    index in indices]
+
+    with multiprocessing.Pool(processes=num_chunks) as pool:
+        finished_models = pool.starmap(
+            simulate_model,
+            process_list
+        )
+
+    results = []
+    for model in finished_models:
+        result = model.getSolutions(final_names)
+        print(f'Results from {model.getconn._omc_process.pid}: {result}')
+        results.append(result)
+
+        for script in post_sim_scripts:
+            res = model.getconn.execute("runScript(\"" + script + "\")")
+            if res == "Failed":
+                print(f'Failed to execute script: {script}')
+
+    # with (contextlib.nullcontext()):
+    #     dask_bag = bag.from_sequence(indices, npartitions=num_chunks)
+    #     combined_results = dask_bag.map_partitions(simulation_wrapper_function, initial_names, input_values,
+    #                                                final_names, method, model_path, model_name, start_time,
+    #                                                step_size, stop_time, tolerance, result_transformation).compute()
+    return results
+
+
+def create_omc_process(index, model_path, model_name, start_time, stop_time,
+                       step_size, solver, tolerance, pre_sim_scripts, initial_values: dict):
+    from OMPython import ModelicaSystem
+    print(type(initial_values))
+    model = ModelicaSystem(model_path, model_name, commandLineOptions='--demoMode')
+    for script in pre_sim_scripts:
+        res = model.getconn.execute("runScript(\"" + script + "\")")
+        if res == "Failed":
+            print(f'Failed to execute script: {script}')
+
+    model.setParameters([f'{name}={value}' for name, value in initial_values.items()])
+    model.setSimulationOptions(
+        [f'startTime={start_time}', f'stopTime={stop_time}', f'stepSize={step_size}', f'solver={solver}',
+         f'tolerance={tolerance}']
+    )
+
+    result_file = construct_resultfile_name(model_name, index)
+
+    return model, result_file
+
+
+def simulate_model(model, result_file):
+    omc_p = model.simulate(resultfile=result_file)
+
+    poll = omc_p.poll()
+    if poll is None:
+        omc_p.wait()
+        omc_p.terminate()
+    return model
 
 
 def simulation_wrapper_function(*args):

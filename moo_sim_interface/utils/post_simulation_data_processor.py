@@ -16,8 +16,8 @@ def save_results_to_csv(results, sim_params, input_values, model_name):
     file_path = create_save_dir(model_name, '_results.csv')
     with open(file_path, 'w', newline='') as f:
         writer = csv.writer(f, delimiter=';')
-        writer.writerow(sim_params.get('input_configuration').get('variable_names') + sim_params.get(
-            'output_configuration').get('variable_names'))
+        writer.writerow(sim_params.get('input_configuration').get('parameter_names') + sim_params.get(
+            'output_configuration').get('parameter_names'))
         for index, result in results:
             writer.writerow([values[index] for values in input_values] + result)
 
@@ -25,8 +25,8 @@ def save_results_to_csv(results, sim_params, input_values, model_name):
 def save_results_to_txt(results, sim_params, input_values, model_name):
     file_path = create_save_dir(model_name, '_results.txt')
     with open(file_path, 'w') as f:
-        f.write(' '.join(sim_params.get('input_configuration').get('variable_names')
-                         + sim_params.get('output_configuration').get('variable_names')) + '\n')
+        f.write(' '.join(sim_params.get('input_configuration').get('parameter_names')
+                         + sim_params.get('output_configuration').get('parameter_names')) + '\n')
         for index, result in results:
             f.write(' '.join([str(values[index]) for values in input_values] + [str(x) for x in result]) + '\n')
 
@@ -53,8 +53,8 @@ def create_save_dir(model_name, file_name_suffix: str = ''):
 
 
 def plot_results_matplotlib(data: list, sim_params: dict):
-    x_axis_label = sim_params.get('output_configuration').get('variable_names')[0]
-    y_axis_label = sim_params.get('output_configuration').get('variable_names')[1]
+    x_axis_label = sim_params.get('output_configuration').get('parameter_names')[0]
+    y_axis_label = sim_params.get('output_configuration').get('parameter_names')[1]
     results = [data[x][1] for x in range(len(data))]
 
     plt.figure(figsize=(12, 8), dpi=128)
@@ -65,9 +65,9 @@ def plot_results_matplotlib(data: list, sim_params: dict):
 
 
 def plot_results_plotly(data: list, input_values, sim_params: dict):
-    input_names = sim_params.get('input_configuration').get('variable_names')
-    x_axis_label = sim_params.get('output_configuration').get('variable_names')[0]
-    y_axis_label = sim_params.get('output_configuration').get('variable_names')[1]
+    input_names = sim_params.get('input_configuration').get('parameter_names')
+    x_axis_label = sim_params.get('output_configuration').get('parameter_names')[0]
+    y_axis_label = sim_params.get('output_configuration').get('parameter_names')[1]
 
     hover_text_values = [[input_value[data[x][0]] for input_value in input_values] for x in range(len(data))]
     hover_text = ['<br>'.join([f'{input_names[i]}: {hover_text_values[x][i]}' for i in range(len(input_names))]) for x
@@ -83,44 +83,45 @@ def plot_results_plotly(data: list, input_values, sim_params: dict):
 
 
 class PostSimulationDataProcessor:
-    def __init__(self, post_simulation_options: dict, model_variables: list):
-        self.save_all_simulation_variables = post_simulation_options.get('save_all_simulation_variables')
+    def __init__(self, post_simulation_options: dict, model_parameters: list):
+        self.save_all_simulation_parameters = post_simulation_options.get(
+            'save_all_simulation_parameters')  # FIXME: Moved!
 
-        if self.save_all_simulation_variables:
-            if post_simulation_options.get('variables_regex_filter') != 'None':
-                print(f'Saving all simulation variables '
+        if self.save_all_simulation_parameters:
+            if post_simulation_options.get('parameters_regex_filter') != 'None':
+                print(f'Saving all simulation parameters '
                       f'{post_simulation_options.get("filter_mode")}d by filter: '
-                      f'{post_simulation_options.get("variables_regex_filter")}')
-                self.variables_regex_filter = re.compile(post_simulation_options.get('variables_regex_filter'))
+                      f'{post_simulation_options.get("parameters_regex_filter")}')
+                self.parameters_regex_filter = re.compile(post_simulation_options.get('parameters_regex_filter'))
                 self.filter_mode = post_simulation_options.get('filter_mode')
 
-                self._pre_process_model_variables_by_filter(model_variables)
+                self._pre_process_model_parameters_by_filter(model_parameters)
 
             else:
-                print('Saving all simulation variables')
-                self._pre_process_model_variables(model_variables)
+                print('Saving all simulation parameters')
+                self._pre_process_model_parameters(model_parameters)
         else:
             self.value_references = {}
 
-    def _pre_process_model_variables_by_filter(self, model_variables: list):
+    def _pre_process_model_parameters_by_filter(self, model_parameters: list):
         filtered_value_references = {}
 
         if self.filter_mode == 'include':
-            for variable in model_variables:
-                if self.variables_regex_filter.search(variable.name):
-                    filtered_value_references[variable.name] = variable.valueReference
+            for parameter in model_parameters:
+                if self.parameters_regex_filter.search(parameter.name):
+                    filtered_value_references[parameter.name] = parameter.valueReference
 
         elif self.filter_mode == 'exclude':
-            for variable in model_variables:
-                if self.variables_regex_filter.search(variable.name) is None:
-                    filtered_value_references[variable.name] = variable.valueReference
+            for parameter in model_parameters:
+                if self.parameters_regex_filter.search(parameter.name) is None:
+                    filtered_value_references[parameter.name] = parameter.valueReference
 
         self.value_references = filtered_value_references
 
-    def _pre_process_model_variables(self, model_variables: list):
+    def _pre_process_model_parameters(self, model_parameters: list):
         value_references = {}
-        for variable in model_variables:
-            value_references[variable.name] = variable.valueReference
+        for parameter in model_parameters:
+            value_references[parameter.name] = parameter.valueReference
 
         self.value_references = value_references
 
@@ -145,7 +146,7 @@ class PostSimulationDataProcessor:
         if post_simulation_options.get('print_results'):
             print(results)
 
-        if self.save_all_simulation_variables:
+        if self.save_all_simulation_parameters:
             save_full_results_to_json(combined_results, model_name)
 
         if post_simulation_options.get('plot_results'):

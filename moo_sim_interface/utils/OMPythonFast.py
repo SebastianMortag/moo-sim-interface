@@ -23,21 +23,27 @@ class ModelicaSystemFast(ModelicaSystem):
 
         # check for result file exits
         if (not os.path.exists(resFile)):
-            print("Error: Result file does not exist")
+            errstr = "Error: Result file does not exist {}".format(resFile)
+            self._raise_error(errstr=errstr)
             return
             # exit()
         else:
+            resultVars = self.getconn.sendExpression("readSimulationResultVars(\"" + resFile + "\")")
+            self.getconn.sendExpression("closeSimulationResultFile()")
             if (varList == None):
-                # validSolution = ['time'] + self.__getInputNames() + self.__getContinuousNames() + self.__getParameterNames()
-                validSolution = self.getconn.sendExpression("readSimulationResultVars(\"" + resFile + "\")")
-                self.getconn.sendExpression("closeSimulationResultFile()")
-                return validSolution
+                return resultVars
             elif (isinstance(varList, str)):
-                if (varList not in [l["name"] for l in self.quantitiesList] and varList != "time"):
-                    print('!!! ', varList, ' does not exist\n')
+                if (varList not in resultVars and varList != "time"):
+                    errstr = '!!! ' + varList + ' does not exist'
+                    self._raise_error(errstr=errstr)
                     return
                 exp = "readSimulationResult(\"" + resFile + '",{' + varList + "})"
                 res = self.getconn.sendExpression(exp)
+
+                res = res.replace('{', '[').replace('}', ']')
+
+                res = eval(res)
+
                 exp2 = "closeSimulationResultFile()"
                 self.getconn.sendExpression(exp2)
                 return res
@@ -46,8 +52,9 @@ class ModelicaSystemFast(ModelicaSystem):
                 for v in varList:
                     if v == "time":
                         continue
-                    if v not in [l["name"] for l in self.quantitiesList]:
-                        print('!!! ', v, ' does not exist\n')
+                    if v not in resultVars:
+                        errstr = '!!! ' + v + ' does not exist'
+                        self._raise_error(errstr=errstr)
                         return
                 variables = ",".join(varList)
                 exp = "readSimulationResult(\"" + resFile + '",{' + variables + "})"

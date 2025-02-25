@@ -15,7 +15,8 @@ solver: SolverName # solver/method, FMUs support only cvode and euler, leave emp
 
 simulator_path: Path/To/Simulator # Path to the simulator installation, can be empty if Model file is an FMU
 
-run_init_scripts: [ Path/To/Init/Script1, Path/To/Init/Script2 ] # run scripts ahead of the simulation, load libraries, etc.
+pre_sim_scripts: [ Path/To/Init/Script1, Path/To/Init/Script2 ] # run scripts ahead of the simulation, load libraries, etc.
+post_sim_scripts: [ ] # run scripts after the simulation, scripts are executed after the simulation results are returned and have no effect on the post-processing performed by the moo-sim-interface
 
 n_chunks: 1 # Number of chunks to divide the workload (parallel processing). Choose 1 to disable parallel processing.
 
@@ -28,19 +29,19 @@ simulation_setup:
   tolerance: 0.000001
 
   input_configuration:
-    # list of variable names to be modified during the simulation
-    variable_names: [ Component_A.parameter, Component_B.parameter ]
-    # list of variable values to be applied to the variables defined in variable_names OR a range: min:step:max (inclusive)
-    variable_values: [ [ 1, 2, 3 ], 1:1:3 ] # please note the list of lists syntax
-    # Create a Meshgrid of the variable_values and evaluate the model for each pairwise combination
+    # list of parameter names to be modified during the simulation
+    parameter_names: [ Component_A.parameter, Component_B.parameter ]
+    # list of parameter values to be applied to the parameters defined in parameter_names OR a range: min:step:max (inclusive)
+    parameter_values: [ [ 1, 2, 3 ], 1:1:3 ] # please note the list of lists syntax
+    # Create a Meshgrid of the parameter_values and evaluate the model for each pairwise combination
     pairwise: False
 
   output_configuration:
-    # list of variable names to be returned after the simulation
-    variable_names: [ Component_C.parameter ]
-    # apply functions to the simulation results, for example compute the mean a variable over the simulation time
+    # list of parameter names to be returned after the simulation
+    parameter_names: [ Component_C.parameter ]
+    # apply functions to the simulation results, for example compute the mean a parameter over the simulation time
     # available are: take_last, 1-take_last, mean, average, median, min, max, sum, std, var or None (return all values)
-    result_transformation: take_last # alternatively: supply a list of functions, one for each output variable
+    result_transformation: take_last # alternatively: supply a list of functions, one for each output parameter
 
 # Post Simulation Options: The post simulation options are used to process the data after successful simulations.
 post_simulation_options:
@@ -56,15 +57,15 @@ fmu_settings: # these settings apply only when FMU is selected as simulation env
   # Print the progress of each simulation every full (s)econd, (m)inute, (h)our, (d)ay. Choose None to disable.
   print_single_simulation_progress: d
 
-  # Save the final value of every available simulation variable to a separate .json file
-  save_all_simulation_variables: False
-  variables_regex_filter: None # a regex statement to filter the variables by name or None (include all variables)
-  filter_mode: include # include or exclude the variables matched by variables_regex_filter
+  # Save the final value of every available simulation parameter to a separate .json file
+  save_all_simulation_parameters: False
+  parameters_regex_filter: None # a regex statement to filter the parameters by name or None (include all parameters)
+  filter_mode: include # include or exclude the parameters matched by parameters_regex_filter
 
 
 experimental_mode_on: False
 experimental_options:
-  plot_results: False # plot the results as x-y pairs if two output variables are defined
+  plot_results: False # plot the results as x-y pairs if two output parameters are defined
   plot_results_lib: plotly # choose between plotly and matplotlib
   custom_result_transformation: None # supply a custom numpy function to transform the results, example: np.quantile(x, 0.99, axis=0)
   # 0: Off, 1: mark failed simulations and continue, 2: stop all simulations on first failure, 3: retry failed
