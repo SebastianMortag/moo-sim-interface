@@ -135,8 +135,10 @@ def run_simulation_in_parallel(final_names, indices, initial_names, input_values
 def create_omc_process(index, model_path, model_name, start_time, stop_time,
                        step_size, solver, tolerance, pre_sim_scripts, initial_values: dict):
     from OMPython import ModelicaSystem
-    print(type(initial_values))
-    model = ModelicaSystem(model_path, model_name, commandLineOptions='--demoMode')
+    build_dir = construct_build_dir(model_name, index)
+    print(build_dir)
+    os.mkdir(build_dir)
+    model = ModelicaSystem(model_path, model_name, customBuildDirectory=build_dir, commandLineOptions='--demoMode')
     for script in pre_sim_scripts:
         res = model.getconn.execute("runScript(\"" + script + "\")")
         if res == "Failed":
@@ -219,4 +221,8 @@ def simulation_wrapper_function(*args):
 
 
 def construct_resultfile_name(model_name, index):
-    return os.path.join(os.getcwd(), f'{model_name}_{index}.mat').replace(' ', '_')
+    return os.path.join(os.getcwd(), f'{model_name}_{index}.mat'.replace(' ', '_'))
+
+
+def construct_build_dir(model_name, index):
+    return os.path.join(os.getcwd(), f'{model_name}_{index}'.replace(' ', '_'))
