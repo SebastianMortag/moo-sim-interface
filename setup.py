@@ -22,7 +22,7 @@ extras_require = {
 }
 
 setup(name='moo_sim_interface',
-      version='0.3.0',
+      version='0.3.2',
       description='A generic interface for Modelica/FMU simulation and optimization',
       long_description=long_description,
       author='Sebastian Mortag',

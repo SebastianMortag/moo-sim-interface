@@ -15,7 +15,8 @@ solver: # solver/method, FMUs support only cvode and euler, leave empty to use t
 
 simulator_path: # Path to the simulator installation, can be empty if Model file is an FMU
 
-run_init_scripts: [ ] # run scripts ahead of the simulation, load libraries, etc.
+pre_sim_scripts: [ ] # run scripts ahead of the simulation, load libraries, etc.
+post_sim_scripts: [ ] # run scripts after the simulation, scripts are executed after the simulation results are returned and have no effect on the post-processing performed by the moo-sim-interface
 
 n_chunks: 10 # Number of chunks to divide the workload (parallel processing). Choose 1 to disable parallel processing.
 

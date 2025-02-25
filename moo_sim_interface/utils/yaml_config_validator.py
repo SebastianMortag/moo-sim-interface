@@ -45,7 +45,7 @@ def check_experimental_options(simulation_config: dict) -> bool:
             mycode = compile(experimental_options.get('custom_result_transformation'), '<string>', 'eval')
             simulation_config['simulation_setup']['output_configuration']['result_transformation'] = mycode
         except SyntaxError:
-            raise ValueError(f'Invalid custom_result_transformation, could not compile expression!')
+            raise ValueError('Invalid custom_result_transformation, could not compile expression!')
 
     if experimental_options.get('safe_mode_type') not in [0, 1, 2, 3, 4]:
         raise ValueError('Invalid safe_mode_type, choose either 0, 1, 2, 3 or 4!')
@@ -76,11 +76,17 @@ def check_general_options(general_options: dict):
         if not pathlib.Path(general_options.get('simulator_path')).is_dir():
             raise ValueError('Invalid simulator_path, must be a directory!')
 
-    if not isinstance(general_options.get('run_init_scripts'), list):
-        raise ValueError('Invalid run_init_scripts, must be a list!')
-    for script in general_options.get('run_init_scripts'):
+    if not isinstance(general_options.get('pre_sim_scripts'), list):
+        raise ValueError('Invalid pre_sim_scripts, must be a list!')
+    for script in general_options.get('pre_sim_scripts'):
         if not pathlib.Path(script).is_file():
-            raise ValueError('Invalid run_init_scripts, must be a list of valid files!')
+            raise ValueError('Invalid pre_sim_scripts, must be a list of valid files!')
+
+    if not isinstance(general_options.get('post_sim_scripts'), list):
+        raise ValueError('Invalid post_sim_scripts, must be a list!')
+    for script in general_options.get('post_sim_scripts'):
+        if not pathlib.Path(script).is_file():
+            raise ValueError('Invalid post_sim_scripts, must be a list of valid files!')
 
     if general_options.get('n_chunks') is None or not isinstance(general_options.get('n_chunks'), int):
         raise ValueError('Invalid n_chunks, choose an integer value!')

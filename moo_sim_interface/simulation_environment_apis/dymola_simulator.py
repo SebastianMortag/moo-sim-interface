@@ -27,17 +27,19 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
 
     transformation_option = args.get('simulation_setup').get('output_configuration').get('result_transformation')
     # TODO: generalize trajectory saving using yaml parser
-    save_trajectories = False if transformation_option == 'take_last' or transformation_option == '1-take_last' else True
+    save_trajectories = False if transformation_option == 'take_last' or transformation_option == '1-take_last' else \
+        True
 
     sim_params = args.get('simulation_setup')
     model_name = args.get('model_name')
-    init_scripts = args.get('run_init_scripts')
+    pre_sim_script = args.get('pre_sim_scripts')
+    post_sim_scripts = args.get('post_sim_scripts')
 
     print(f'Simulation of {np.size(input_values[0]) if len(input_values) > 0 else 0} parameter variation(s) on '
           f'{model_name}:')
 
     dymola_instance = DymolaInterface(startDymola=True)
-    for script in init_scripts:
+    for script in pre_sim_script:
         dymola_instance.RunScript(script)
 
     dymola_instance.openModel(model_filename, changeDirectory=False)
@@ -89,6 +91,9 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
 
     processed_results = post_simulation_data_processor.do_post_processing(args, input_values, combined_results,
                                                                           model_path, return_results=return_results)
+
+    for script in post_sim_scripts:
+        dymola_instance.RunScript(script)
 
     if return_results:
         return processed_results
