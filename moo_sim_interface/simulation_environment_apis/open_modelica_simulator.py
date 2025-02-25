@@ -21,7 +21,7 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
         simulator_path = args.get('simulator_path')
         install_openmodelica_package(simulator_path)
 
-    (model_filename, model_path, input_values, input_variable_names, num_chunks, output_variable_names, sync_execution,
+    (model_filename, model_path, input_values, input_names, num_chunks, final_names, sync_execution,
      time_modulo, result_transformation) = prepare_simulation_environment(args)
 
     if version("OMPython") > "3.4.9":
@@ -46,8 +46,6 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
         step_size = (stop_time - start_time) / number_of_intervals
     method = args.get('solver')
     tolerance = sim_params.get('tolerance')
-    initial_names = sim_params.get('input_configuration').get('variable_names')
-    final_names = sim_params.get('output_configuration').get('variable_names')
 
     indices = list(np.ndindex(input_values[0].shape if len(input_values) > 0 else (1,)))
 
@@ -59,7 +57,7 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
             if res == "Failed":
                 print(f'Failed to execute script: {script}')
 
-        combined_results = run_simulation_in_order(final_names, indices, initial_names, input_values, method, model,
+        combined_results = run_simulation_in_order(final_names, indices, input_names, input_values, method, model,
                                                    start_time, step_size, stop_time, tolerance, result_transformation)
 
         for script in post_sim_scripts:
@@ -68,7 +66,7 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
                 print(f'Failed to execute script: {script}')
 
     else:
-        combined_results = run_simulation_in_parallel(final_names, indices, initial_names, input_values, method,
+        combined_results = run_simulation_in_parallel(final_names, indices, input_names, input_values, method,
                                                       model_path, model_name, start_time, step_size, stop_time,
                                                       tolerance, num_chunks, sim_params, result_transformation,
                                                       pre_sim_scripts, post_sim_scripts)
@@ -95,7 +93,7 @@ def run_simulation_in_order(final_names, indices, initial_names, input_values, m
         results = model.getSolutions(final_names)
 
         combined_results.append([(i, result_transformation(results))])
-        combined_results.append([])  # placeholder for all variables results
+        combined_results.append([])  # placeholder for all parameters results
     return combined_results
 
 

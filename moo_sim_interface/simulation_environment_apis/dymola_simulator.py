@@ -20,8 +20,8 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
         from dymola.dymola_exception import DymolaFunctionException
         from dymola.dymola_interface import DymolaInterface
 
-    (model_filename, model_path, input_values, input_variable_names, num_chunks, output_variable_names, sync_execution,
-     time_modulo, result_transformation) = prepare_simulation_environment(args)
+    (model_filename, model_path, input_values, input_parameter_names, num_chunks, output_parameter_names,
+     sync_execution, time_modulo, result_transformation) = prepare_simulation_environment(args)
 
     post_simulation_data_processor = PostSimulationDataProcessor(args.get('post_simulation_options'), [])
 
@@ -58,8 +58,6 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
     method = args.get('solver')
     tolerance = sim_params.get('tolerance')
     fixed_step_size = 0.0
-    initial_names = sim_params.get('input_configuration').get('variable_names')
-    final_names = sim_params.get('output_configuration').get('variable_names')
 
     indices = list(np.ndindex(input_values[0].shape if len(input_values) > 0 else (1,)))
     combined_results = []
@@ -71,10 +69,10 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
             results = do_single_simulation(dymola_instance, save_trajectories, problem, start_time, stop_time,
                                            number_of_intervals,
                                            output_interval, method, tolerance, fixed_step_size, result_file,
-                                           initial_names, initial_values, final_names)
+                                           input_parameter_names, initial_values, output_parameter_names)
 
             combined_results.append([(i, result_transformation(results, 1))])
-            combined_results.append([])  # placeholder for all variables results
+            combined_results.append([])  # placeholder for all parameters results
     else:
         for batch in BatchedIterator(indices, num_chunks):
             initial_values = [[values[i] for values in input_values] for i in batch]  # set the start values
@@ -83,11 +81,11 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
             results = do_multi_simulation(dymola_instance, save_trajectories, problem, start_time, stop_time,
                                           number_of_intervals,
                                           output_interval, method, tolerance, fixed_step_size, result_file,
-                                          initial_names, initial_values, final_names, [])
+                                          input_parameter_names, initial_values, output_parameter_names, [])
 
             for i, result in zip(batch, results):
                 combined_results.append([(i, result_transformation(result))])
-                combined_results.append([])  # placeholder for all variables results
+                combined_results.append([])  # placeholder for all parameters results
 
     processed_results = post_simulation_data_processor.do_post_processing(args, input_values, combined_results,
                                                                           model_path, return_results=return_results)

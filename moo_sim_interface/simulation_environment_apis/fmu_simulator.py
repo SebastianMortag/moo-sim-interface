@@ -22,7 +22,7 @@ SIMULATION_RAMP_UP_TIME = 0.02
 
 
 def run_fmu_simulation(return_results: bool = False, **kwargs) -> Union[None, list]:
-    (fmu_filename, fmu_path, input_values, input_variable_names, num_chunks, output_variable_names, sync_execution,
+    (fmu_filename, fmu_path, input_values, input_parameter_names, num_chunks, output_parameter_names, sync_execution,
      time_modulo, result_transformation) = prepare_simulation_environment(kwargs)
 
     if kwargs.get('model_name') is None:
@@ -38,10 +38,10 @@ def run_fmu_simulation(return_results: bool = False, **kwargs) -> Union[None, li
 
     model_description = read_model_description(fmu_path)  # read the model description
 
-    # collect the value references for the variables to read / write
+    # collect the value references for the parameters to read / write
     value_references = {}
-    for variable in model_description.modelVariables:
-        value_references[variable.name] = variable.valueReference
+    for parameter in model_description.modelVariables:
+        value_references[parameter.name] = parameter.valueReference
 
     post_simulation_data_processor = PostSimulationDataProcessor(kwargs.get('post_simulation_options'),
                                                                  model_description.modelVariables)
@@ -57,8 +57,8 @@ def run_fmu_simulation(return_results: bool = False, **kwargs) -> Union[None, li
     print_sim_progress = kwargs.get('fmu_settings').get('print_single_simulation_progress')
 
     # get the value references for the start and output values
-    start_value_references = [value_references[name] for name in input_variable_names]
-    result_value_references = [value_references[name] for name in output_variable_names]
+    start_value_references = [value_references[name] for name in input_parameter_names]
+    result_value_references = [value_references[name] for name in output_parameter_names]
 
     indices = list(np.ndindex(input_values[0].shape if len(input_values) > 0 else (1,)))
 
@@ -90,7 +90,7 @@ def simulation_wrapper_function(*args):
     indices, input_values, fmu_args, sim_params, start_value_references, result_value_references, time_modulo, \
         print_sim_progress, sync_execution, result_transformation, all_value_references = args
     zipped = []
-    all_variables_simulation_results = []
+    all_parameters_simulation_results = []
     fmu = FMU2Slave(**fmu_args)
     fmu.instantiate()
 
@@ -118,7 +118,7 @@ def simulation_wrapper_function(*args):
                 fmu.doStep(currentCommunicationPoint=time, communicationStepSize=step_size)
                 time += step_size
             except Exception as e:
-                handle_error(args, i, zipped, all_variables_simulation_results, e)
+                handle_error(args, i, zipped, all_parameters_simulation_results, e)
                 break
 
         # simulation loop
@@ -126,25 +126,25 @@ def simulation_wrapper_function(*args):
             try:
                 time = do_simulation_step(fmu, result_value_references, sim_results, step_size, time)
             except Exception as e:
-                handle_error(args, i, zipped, all_variables_simulation_results, e)
+                handle_error(args, i, zipped, all_parameters_simulation_results, e)
                 break
 
             if time % time_modulo == 0:
                 print(f'Current time: {floor(time / time_modulo)}{print_sim_progress}')
 
         else:
-            # this code block saves all simulation variables at every step of the simulation, EXTREMELY SLOW!
+            # this code block saves all simulation parameters at every step of the simulation, EXTREMELY SLOW!
             # produces .json output files of several GBs in size
-            # for variable_name, variable_result in zip(all_value_references.keys(),
+            # for parameter_name, parameter_result in zip(all_value_references.keys(),
             #                                           fmu.getReal(all_value_references.values())):
-            #     sim_result_list = full_simulation_results.get(variable_name, [])
-            #     sim_result_list.append(variable_result)
-            #     full_simulation_results[variable_name] = sim_result_list
+            #     sim_result_list = full_simulation_results.get(parameter_name, [])
+            #     sim_result_list.append(parameter_result)
+            #     full_simulation_results[parameter_name] = sim_result_list
             full_simulation_results = RecursivelyOrderedDict()
-            for variable_name, variable_result in zip(all_value_references.keys(),
-                                                      fmu.getReal(all_value_references.values())):
-                full_simulation_results[variable_name] = variable_result
-            all_variables_simulation_results.append(full_simulation_results)
+            for parameter_name, parameter_result in zip(all_value_references.keys(),
+                                                        fmu.getReal(all_value_references.values())):
+                full_simulation_results[parameter_name] = parameter_result
+            all_parameters_simulation_results.append(full_simulation_results)
 
             sim_results = np.array(sim_results).T.tolist()
             # apply transformation to the results; store the index and the results
@@ -160,7 +160,7 @@ def simulation_wrapper_function(*args):
     else:
         fmpy.freeLibrary(fmu.dll._handle)  # unload the shared library directly
 
-    return zipped, all_variables_simulation_results
+    return zipped, all_parameters_simulation_results
 
 
 def do_simulation_step(fmu, result_value_references, sim_results, step_size, time):
@@ -171,13 +171,13 @@ def do_simulation_step(fmu, result_value_references, sim_results, step_size, tim
     return time
 
 
-def handle_error(args, i, zipped, all_variables_simulation_results, exception):
+def handle_error(args, i, zipped, all_parameters_simulation_results, exception):
     safe_mode_type = args[3].get('safe_mode_type')
     if safe_mode_type == 0:
         raise exception
     elif safe_mode_type == 1:
         print(f'Error occurred, skipping simulation: {i}')
-        all_variables_simulation_results.append({np.nan})
+        all_parameters_simulation_results.append({np.nan})
         zipped.append((i, np.nan))
     elif safe_mode_type == 2:
         os._exit(0)
@@ -192,10 +192,10 @@ def handle_error(args, i, zipped, all_variables_simulation_results, exception):
         args = tuple(t_args)
         a, b = simulation_wrapper_function(*args)
         zipped.append(a[0])
-        all_variables_simulation_results.append(b[0])
+        all_parameters_simulation_results.append(b[0])
     elif safe_mode_type == 4:
         alt_config = args[3].get('alt_config_file')
         print(f'Error occurred, running alternative configuration: {alt_config}')
         moo_sim_interface.simulator_api.sim_env_apis_wrapper(**parse_config_file(alt_config))
-        all_variables_simulation_results.append({alt_config})
+        all_parameters_simulation_results.append({alt_config})
         zipped.append((i, alt_config))

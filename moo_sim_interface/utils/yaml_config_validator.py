@@ -32,8 +32,8 @@ def check_experimental_options(simulation_config: dict) -> bool:
     if not isinstance(experimental_options.get('plot_results'), bool):
         raise ValueError('Invalid plot_results option, choose either True or False!')
     if experimental_options.get('plot_results') and len(simulation_config.get('simulation_setup').get(
-            'output_configuration').get('variable_names')) != 2:
-        raise ValueError('Invalid output option, choose exactly two output variables when plotting!')
+            'output_configuration').get('parameter_names')) != 2:
+        raise ValueError('Invalid output option, choose exactly two output parameters when plotting!')
     if experimental_options.get('plot_results') and experimental_options.get('plot_results_lib') not in ['matplotlib',
                                                                                                          'plotly']:
         raise ValueError('Invalid plot_results_lib, choose either matplotlib or plotly!')
@@ -104,25 +104,25 @@ def check_simulation_setup(simulation_setup: dict):
             (simulation_setup.get('step_size') is None and simulation_setup.get('num_of_steps') is None)):
         raise ValueError('Choose either step_size OR num_of_steps for the simulation!')
 
-    if len(simulation_setup.get('input_configuration').get('variable_names')) != len(
-            simulation_setup.get('input_configuration').get('variable_values')):
-        raise ValueError('Number of input variable names and variable values must be equal!')
+    if len(simulation_setup.get('input_configuration').get('parameter_names')) != len(
+            simulation_setup.get('input_configuration').get('parameter_values')):
+        raise ValueError('Number of input parameter names and parameter values must be equal!')
 
     if not isinstance(simulation_setup.get('input_configuration').get('pairwise'), bool):
         raise ValueError('pairwise must be a boolean value!')
 
     if not simulation_setup.get('input_configuration').get('pairwise'):
         if len({len(values) if isinstance(values, list) else get_num_of_values_from_input_range(values) for values in
-                simulation_setup.get('input_configuration').get('variable_values')}) > 1:
-            raise ValueError('Number of input variable values must be equal for every variable if pairwise is False!')
+                simulation_setup.get('input_configuration').get('parameter_values')}) > 1:
+            raise ValueError('Number of input parameter values must be equal for every parameter if pairwise is False!')
 
-    if not simulation_setup.get('output_configuration').get('variable_names'):
-        raise ValueError('No output variable names specified!')
+    if not simulation_setup.get('output_configuration').get('parameter_names'):
+        raise ValueError('No output parameter names specified!')
 
     if isinstance(simulation_setup.get('output_configuration').get('result_transformation'), list):
-        if len(simulation_setup.get('output_configuration').get('variable_names')) != len(
+        if len(simulation_setup.get('output_configuration').get('parameter_names')) != len(
                 simulation_setup.get('output_configuration').get('result_transformation')):
-            raise ValueError('Number of output variable names and result transformations must be equal!')
+            raise ValueError('Number of output parameter names and result transformations must be equal!')
         for opt in simulation_setup.get('output_configuration').get('result_transformation'):
             if opt not in ['take_last', '1-take_last', 'mean', 'average', 'median', 'min', 'max', 'sum', 'std', 'var',
                            'None']:
@@ -154,14 +154,14 @@ def check_fmu_settings(fmu_settings: dict):
     if fmu_settings.get('print_single_simulation_progress') not in ['s', 'm', 'h', 'd', 'None']:
         raise ValueError('Invalid print_single_simulation_progress, choose either s, m, h, d or None!')
 
-    if not isinstance(fmu_settings.get('save_all_simulation_variables'), bool):
-        raise ValueError('Invalid save all simulation variables option, choose either True or False!')
+    if not isinstance(fmu_settings.get('save_all_simulation_parameters'), bool):
+        raise ValueError('Invalid save all simulation parameters option, choose either True or False!')
 
-    if fmu_settings.get('variables_regex_filter') != 'None':
+    if fmu_settings.get('parameters_regex_filter') != 'None':
         try:
-            re.compile(fmu_settings.get('variables_regex_filter'))
+            re.compile(fmu_settings.get('parameters_regex_filter'))
         except re.error:
-            raise ValueError('Invalid variables_regex_filter, could not compile regex!')
+            raise ValueError('Invalid parameters_regex_filter, could not compile regex!')
 
     if fmu_settings.get('filter_mode') not in ['include', 'exclude']:
         raise ValueError('Invalid filter mode, choose either include or exclude!')

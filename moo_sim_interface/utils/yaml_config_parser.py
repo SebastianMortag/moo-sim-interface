@@ -23,9 +23,9 @@ def prepare_simulation_environment(args: dict):
             model_path = pathlib.Path(os.getcwd()) / 'fmus' / model_filename
         else:
             model_path = pathlib.Path(os.getcwd()) / model_filename
-    input_variable_names = args.get('simulation_setup').get('input_configuration').get('variable_names')
-    input_variable_values = args.get('simulation_setup').get('input_configuration').get('variable_values')
-    output_variable_names = args.get('simulation_setup').get('output_configuration').get('variable_names')
+    input_parameter_names = args.get('simulation_setup').get('input_configuration').get('parameter_names')
+    input_parameter_values = args.get('simulation_setup').get('input_configuration').get('parameter_values')
+    output_parameter_names = args.get('simulation_setup').get('output_configuration').get('parameter_names')
     result_transformation = construct_result_transformation(
         args.get('simulation_setup').get('output_configuration').get('result_transformation'))
     time_modulo = get_time_modulo(args.get('fmu_settings').get('print_single_simulation_progress'))
@@ -33,14 +33,14 @@ def prepare_simulation_environment(args: dict):
     num_chunks = args.get('n_chunks')
     create_mesh = args.get('simulation_setup').get('input_configuration').get('pairwise')
 
-    input_variable_values = [input_list if isinstance(input_list, list) else parse_input_range(input_list) for
-                             input_list in input_variable_values]
+    input_parameter_values = [input_list if isinstance(input_list, list) else parse_input_range(input_list) for
+                              input_list in input_parameter_values]
 
     if create_mesh:
-        input_values = np.array(np.meshgrid(*input_variable_values, indexing='ij'), dtype=np.float64)
+        input_values = np.array(np.meshgrid(*input_parameter_values, indexing='ij'), dtype=np.float64)
     else:
-        input_values = np.array(input_variable_values, dtype=np.float64)
-    return (model_filename, model_path, input_values, input_variable_names, num_chunks, output_variable_names,
+        input_values = np.array(input_parameter_values, dtype=np.float64)
+    return (model_filename, model_path, input_values, input_parameter_names, num_chunks, output_parameter_names,
             sync_execution, time_modulo, result_transformation)
 
 
