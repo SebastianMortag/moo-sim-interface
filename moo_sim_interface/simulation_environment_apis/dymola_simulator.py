@@ -71,7 +71,7 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
                                            output_interval, method, tolerance, fixed_step_size, result_file,
                                            input_parameter_names, initial_values, output_parameter_names)
 
-            combined_results.append([(i, result_transformation(results, 1))])
+            combined_results.append([(i, result_transformation(results))])
             combined_results.append([])  # placeholder for all parameters results
     else:
         for batch in BatchedIterator(indices, num_chunks):

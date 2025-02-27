@@ -33,13 +33,7 @@ Launch the simulations using the following command, which will output the result
 
 ## Installation
 
-**Attention**: Installation using ```pip install -U git+``` is not recommended, due to a bug in pip. Instead, clone the repository and install it locally.
-
-```git clone https://github.com/SebastianMortag/moo-sim-interface.git```
-
-```cd moo-sim-interface```
-
-```pip install .```
+```pip install git+https://github.com/SebastianMortag/moo-sim-interface.git```
 
 ### Requirements
 
@@ -123,7 +117,7 @@ seconds that a simulation is allowed to run. If the simulation time exceeds this
 
 Various options exist to disable log messages in OpenModelica.
 
-_Command Line Options (e.g. Compiler Flags for omc):_
+_Command Line Options (e.g. Compiler Flags for omc / Translation Flags in OMEdit):_
 * ```--demoMode``` Disable Info messages when loading a model. Warnings, like Lexer, are still displayed
 For example: ```ModelicaSystem(model_path, model_name, commandLineOptions='--demoMode')```
 * ```-q``` Silent mode, purpose unknown

@@ -54,7 +54,7 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
         model = ModelicaSystemFast(model_path, model_name, commandLineOptions='--demoMode')
         for script in pre_sim_scripts:
             res = model.getconn.execute("runScript(\"" + script + "\")")
-            if res == "Failed":
+            if "Failed" in res:
                 print(f'Failed to execute script: {script}')
 
         combined_results = run_simulation_in_order(final_names, indices, input_names, input_values, method, model,
@@ -62,7 +62,7 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
 
         for script in post_sim_scripts:
             res = model.getconn.execute("runScript(\"" + script + "\")")
-            if res == "Failed":
+            if "Failed" in res:
                 print(f'Failed to execute script: {script}')
 
     else:
@@ -121,7 +121,7 @@ def run_simulation_in_parallel(final_names, indices, initial_names, input_values
 
         for script in post_sim_scripts:
             res = model.getconn.execute("runScript(\"" + script + "\")")
-            if res == "Failed":
+            if "Failed" in res:
                 print(f'Failed to execute script: {script}')
 
     # with (contextlib.nullcontext()):
@@ -141,7 +141,7 @@ def create_omc_process(index, model_path, model_name, start_time, stop_time,
     model = ModelicaSystem(model_path, model_name, customBuildDirectory=build_dir, commandLineOptions='--demoMode')
     for script in pre_sim_scripts:
         res = model.getconn.execute("runScript(\"" + script + "\")")
-        if res == "Failed":
+        if "Failed" in res:
             print(f'Failed to execute script: {script}')
 
     model.setParameters([f'{name}={value}' for name, value in initial_values.items()])
@@ -216,7 +216,7 @@ def simulation_wrapper_function(*args):
         result = model.getSolutions(final_names, resultfile=result_file)
         # print(f'Results from {model.getconn._omc_process.pid}: {result}')
 
-        results.append((i, result_transformation(result, 1)))
+        results.append((i, result_transformation(result)))
     return results, []
 
 
