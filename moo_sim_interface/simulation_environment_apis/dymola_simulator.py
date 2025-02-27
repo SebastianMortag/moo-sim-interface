@@ -88,7 +88,7 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
                 combined_results.append([])  # placeholder for all parameters results
 
     processed_results = post_simulation_data_processor.do_post_processing(args, input_values, combined_results,
-                                                                          model_path, return_results=return_results)
+                                                                          model_name, return_results=return_results)
 
     for script in post_sim_scripts:
         dymola_instance.RunScript(script)
