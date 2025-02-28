@@ -37,6 +37,8 @@ jobs:
               apt-get update &&
               apt-get install -y python3 python3-pip &&
               ln -s /usr/bin/python3 /usr/bin/python &&
+              groupadd -g $(id -g) hostgroup &&
+              useradd -m -u $(id -u) -g $(id -g) hostuser &&
               chown -R $(id -u):$(id -g) /workspace &&
               runuser -u $(id -u) -- bash -c '
                 echo \"installPackage(Modelica, \\\"4.0.0+maint.om\\\"); getErrorString();\" > install.mos &&
