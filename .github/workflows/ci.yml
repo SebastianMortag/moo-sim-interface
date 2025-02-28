@@ -33,15 +33,18 @@ jobs:
           docker run --rm \
             -v $(pwd):/workspace \
             -w /workspace \
-            --user $(id -u):$(id -g) \
             openmodelica/openmodelica:v1.24.4-ompython /bin/bash -c "
-              su root -c 'apt-get update && apt-get install -y python3 python3-pip' &&
+              apt-get update &&
+              apt-get install -y python3 python3-pip &&
               ln -s /usr/bin/python3 /usr/bin/python &&
-              echo 'installPackage(Modelica, \"4.0.0+maint.om\"); getErrorString();' > install.mos &&
-              omc install.mos &&
-              python3 -m pip install --upgrade pip &&
-              python3 -m pip install -r requirements.txt &&
-              python3 -m pip install -r requirements-develop.txt &&
-              python3 -m pip install -e . &&
-              pytest
+              chown -R $(id -u):$(id -g) /workspace &&
+              runuser -u $(id -u) -- bash -c '
+                echo \"installPackage(Modelica, \\\"4.0.0+maint.om\\\"); getErrorString();\" > install.mos &&
+                omc install.mos &&
+                python3 -m pip install --upgrade pip &&
+                python3 -m pip install -r requirements.txt &&
+                python3 -m pip install -r requirements-develop.txt &&
+                python3 -m pip install -e . &&
+                pytest
+              '
             "
