@@ -1,4 +1,5 @@
 from typing import Union
+
 import numpy as np
 
 from moo_sim_interface.utils.batched_iterator import BatchedIterator
@@ -74,7 +75,7 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
             combined_results.append([(i, result_transformation(results))])
             combined_results.append([])  # placeholder for all parameters results
     else:
-        for batch in BatchedIterator(indices, num_chunks):
+        for batch in BatchedIterator(indices, batch_size=num_chunks):  # work through n tasks in parallel
             initial_values = [[values[i] for values in input_values] for i in batch]  # set the start values
             result_file = '_'.join([model_name, str(batch[0]), str(batch[-1])])
 
