@@ -11,3 +11,10 @@ repos:
     - id: flake8
       exclude: OMPythonFast.py
       args: ["--max-line-length=120", "--extend-ignore=E203,W503"]
+- repo: local
+  hooks:
+    - id: pytest
+      name: Run pytest
+      entry: bash -c 'SKIP_ONLINE_TESTS=true PYTHONPATH=$(pwd) pytest'
+      language: system
+      types: [python]
