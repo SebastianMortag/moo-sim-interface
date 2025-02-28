@@ -40,7 +40,7 @@ jobs:
               groupadd -g $(id -g) hostgroup &&
               useradd -m -u $(id -u) -g $(id -g) hostuser &&
               chown -R $(id -u):$(id -g) /workspace &&
-              runuser -u $(id -u) -- bash -c '
+              su hostuser -c '
                 echo \"installPackage(Modelica, \\\"4.0.0+maint.om\\\"); getErrorString();\" > install.mos &&
                 omc install.mos &&
                 python3 -m pip install --upgrade pip &&
