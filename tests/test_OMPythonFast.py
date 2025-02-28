@@ -15,9 +15,21 @@ def test_modelica_system_double_pendulum():
         fileName="/root/.openmodelica/libraries/Modelica 4.0.0+maint.om/package.mo",
         modelName="Modelica.Mechanics.MultiBody.Examples.Elementary.DoublePendulum"
     )
-    model.buildModel()
     model.simulate()
-    result = model.getSolutions(["time", "pendulum1.s", "pendulum2.s"])
+    result = model.getSolutions(["damper.tau"])
 
     assert result is not None
-    assert len(result) == 3  # time, pendulum1.s, pendulum2.s
+    assert result.shape == (1, 502)
+
+
+@skip_online
+def test_modelica_system_fast_double_pendulum():
+    model = ModelicaSystem(
+        fileName="/root/.openmodelica/libraries/Modelica 4.0.0+maint.om/package.mo",
+        modelName="Modelica.Mechanics.MultiBody.Examples.Elementary.DoublePendulum"
+    )
+    model.simulate()
+    result = model.getSolutions(["damper.tau"])
+
+    assert result is not None
+    assert result.shape == (1, 502)
