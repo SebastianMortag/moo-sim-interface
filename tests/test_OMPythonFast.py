@@ -12,7 +12,7 @@ skip_online = pytest.mark.skipif(
 @skip_online
 def test_modelica_system_double_pendulum():
     model = ModelicaSystem(
-        fileName="/root/.openmodelica/libraries/Modelica 4.0.0+maint.om/package.mo",
+        fileName="/home/hostuser/.openmodelica/libraries/Modelica 4.0.0+maint.om/package.mo",
         modelName="Modelica.Mechanics.MultiBody.Examples.Elementary.DoublePendulum"
     )
     model.simulate()
@@ -25,7 +25,7 @@ def test_modelica_system_double_pendulum():
 @skip_online
 def test_modelica_system_fast_double_pendulum():
     model = ModelicaSystem(
-        fileName="/root/.openmodelica/libraries/Modelica 4.0.0+maint.om/package.mo",
+        fileName="/home/hostuser/.openmodelica/libraries/Modelica 4.0.0+maint.om/package.mo",
         modelName="Modelica.Mechanics.MultiBody.Examples.Elementary.DoublePendulum"
     )
     model.simulate()
