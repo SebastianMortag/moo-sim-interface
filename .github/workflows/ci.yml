@@ -30,7 +30,7 @@ jobs:
 
       - name: Run tests inside Docker
         run: |
-          docker run --rm -v $(pwd):/workspace -w /workspace -e openmodelica/openmodelica:v1.24.4-ompython /bin/bash -c "
+          docker run --rm -v $(pwd):/workspace -w /workspace openmodelica/openmodelica:v1.24.4-ompython /bin/bash -c "
             echo 'installPackage(Modelica, \"4.0.0+maint.om\"); getErrorString();' > install.mos &&
             omc install.mos &&
             python -m pip install --upgrade pip &&
