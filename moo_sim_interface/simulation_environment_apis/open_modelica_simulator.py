@@ -1,15 +1,15 @@
 import multiprocessing
 import os
 import shutil
-import subprocess
-import tempfile
-import uuid
 from importlib.metadata import version
 from importlib.util import find_spec
+from math import ceil
 from typing import Union
 
 import numpy as np
 
+from moo_sim_interface.utils.OMPythonFast import ModelicaSystemFast
+from moo_sim_interface.utils.batched_iterator import BatchedIterator
 from moo_sim_interface.utils.dependency_installer import install_openmodelica_package
 from moo_sim_interface.utils.post_simulation_data_processor import PostSimulationDataProcessor
 from moo_sim_interface.utils.yaml_config_parser import prepare_simulation_environment
@@ -50,7 +50,6 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
     indices = list(np.ndindex(input_values[0].shape if len(input_values) > 0 else (1,)))
 
     if num_chunks == 1:
-        from moo_sim_interface.utils.OMPythonFast import ModelicaSystemFast
         model = ModelicaSystemFast(model_path, model_name, commandLineOptions='--demoMode')
         for script in pre_sim_scripts:
             res = model.getconn.execute("runScript(\"" + script + "\")")
@@ -68,7 +67,7 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
     else:
         combined_results = run_simulation_in_parallel(final_names, indices, input_names, input_values, method,
                                                       model_path, model_name, start_time, step_size, stop_time,
-                                                      tolerance, num_chunks, sim_params, result_transformation,
+                                                      tolerance, num_chunks, result_transformation,
                                                       pre_sim_scripts, post_sim_scripts)
 
     processed_results = post_simulation_data_processor.do_post_processing(args, input_values, combined_results,
@@ -98,131 +97,106 @@ def run_simulation_in_order(final_names, indices, initial_names, input_values, m
 
 
 def run_simulation_in_parallel(final_names, indices, initial_names, input_values, method, model_path, model_name,
-                               start_time, step_size, stop_time, tolerance, num_chunks, sim_params,
+                               start_time, step_size, stop_time, tolerance, num_chunks,
                                result_transformation, pre_sim_scripts, post_sim_scripts):
     print(f'Running simulation in parallel with {num_chunks} chunks.')
 
-    process_list = [create_omc_process(index, model_path, model_name, start_time, stop_time, step_size, method,
-                                       tolerance, pre_sim_scripts, dict(zip(initial_names, [values[index] for values in
-                                                                                            input_values]))) for
-                    index in indices]
+    batch_size = ceil(len(indices) / num_chunks)  # calculate the batch size and work on all batches in parallel
+
+    batched_indices = [batch for batch in BatchedIterator(indices, batch_size)]
+    print(f'Batched indices: {batched_indices}')
+
+    # Prepare the arguments to be passed to each worker
+    worker_args = [
+        (indices, final_names, initial_names, input_values, method, model_path, model_name, start_time, step_size,
+         stop_time, tolerance, pre_sim_scripts, post_sim_scripts)
+        for indices in batched_indices]
 
     with multiprocessing.Pool(processes=num_chunks) as pool:
-        finished_models = pool.starmap(
-            simulate_model,
-            process_list
+        results = pool.starmap(simulate_model_worker, worker_args)
+
+    # Process the results
+    combined_results = []
+    for indices, collected_results in results:
+        for index, result in zip(indices, collected_results):
+            combined_results.append([(index, result_transformation(result))])
+            combined_results.append([])  # Placeholder for all parameters results (if needed)
+
+    return combined_results
+
+
+def simulate_model_worker(indices, final_names, initial_names, input_values, method, model_path, model_name,
+                          start_time, step_size, stop_time, tolerance, pre_sim_scripts, post_sim_scripts):
+    model, build_dir = create_omc_process(indices, model_path, model_name, pre_sim_scripts)
+
+    collected_results = []
+
+    for index in indices:
+        initial_values = dict(zip(initial_names, [values[index] for values in input_values]))
+        model.setParameters([f'{name}={value}' for name, value in initial_values.items()])
+        model.setSimulationOptions(
+            [f'startTime={start_time}', f'stopTime={stop_time}', f'stepSize={step_size}', f'solver={method}',
+             f'tolerance={tolerance}']
         )
 
-    results = []
-    for model in finished_models:
+        result_file = construct_resultfile_name(model_name, index)
+
+        # Simulate the model
+        model.simulate(resultfile=result_file)
+
+        # Retrieve results
         result = model.getSolutions(final_names)
-        print(f'Results from {model.getconn._omc_process.pid}: {result}')
-        results.append(result)
+        collected_results.append(result)
+        print(f'Results from process {model.getconn._omc_process.pid}')
 
-        for script in post_sim_scripts:
-            res = model.getconn.execute("runScript(\"" + script + "\")")
-            if "Failed" in res:
-                print(f'Failed to execute script: {script}')
+    # Run post-simulation scripts
+    for script in post_sim_scripts:
+        res = model.getconn.execute("runScript(\"" + script + "\")")
+        if "Failed" in res:
+            print(f'Failed to execute script: {script}')
 
-    # with (contextlib.nullcontext()):
-    #     dask_bag = bag.from_sequence(indices, npartitions=num_chunks)
-    #     combined_results = dask_bag.map_partitions(simulation_wrapper_function, initial_names, input_values,
-    #                                                final_names, method, model_path, model_name, start_time,
-    #                                                step_size, stop_time, tolerance, result_transformation).compute()
-    return results
+    stop_omc_process(model)
+
+    # Remove the build directory
+    try:
+        shutil.rmtree(build_dir)
+    except Exception as e:
+        print(f"Error removing build directory {build_dir}: {e}")
+
+    return indices, collected_results
 
 
-def create_omc_process(index, model_path, model_name, start_time, stop_time,
-                       step_size, solver, tolerance, pre_sim_scripts, initial_values: dict):
-    from OMPython import ModelicaSystem
-    build_dir = construct_build_dir(model_name, index)
-    print(build_dir)
+def create_omc_process(indices, model_path, model_name, pre_sim_scripts):
+    # create one tmp build dir for multiple indices
+    build_dir = construct_build_dir(model_name, indices)
     os.mkdir(build_dir)
-    model = ModelicaSystem(model_path, model_name, customBuildDirectory=build_dir, commandLineOptions='--demoMode')
+    model = ModelicaSystemFast(model_path, model_name, customBuildDirectory=build_dir, commandLineOptions='--demoMode')
     for script in pre_sim_scripts:
         res = model.getconn.execute("runScript(\"" + script + "\")")
         if "Failed" in res:
             print(f'Failed to execute script: {script}')
 
-    model.setParameters([f'{name}={value}' for name, value in initial_values.items()])
-    model.setSimulationOptions(
-        [f'startTime={start_time}', f'stopTime={stop_time}', f'stepSize={step_size}', f'solver={solver}',
-         f'tolerance={tolerance}']
-    )
-
-    result_file = construct_resultfile_name(model_name, index)
-
-    return model, result_file
+    return model, build_dir
 
 
-def simulate_model(model, result_file):
-    omc_p = model.simulate(resultfile=result_file)
-
-    poll = omc_p.poll()
-    if poll is None:
-        omc_p.wait()
-        omc_p.terminate()
-    return model
-
-
-def simulation_wrapper_function(*args):
-    (indices, initial_names, input_values, final_names, method, model_path, model_name, start_time, step_size,
-     stop_time, tolerance, result_transformation) = args
-    # Idea: Copy the Model exe and lib files to a temporary directory and run one instance of the model per chunk
-    from OMPython import ModelicaSystem
-    model = ModelicaSystem(model_path, model_name, commandLineOptions='--demoMode')
-
-    # Create a temporary directory with a random ID
-    temp_dir = os.path.join(tempfile.gettempdir(), str(uuid.uuid4()))
-    os.makedirs(temp_dir, exist_ok=True)
-
-    # Copy necessary files to the temporary directory
-    for file in os.listdir(os.getcwd()):
-        if os.path.splitext(file)[0] == model_name:
-            shutil.copy(file, temp_dir)
-    os.chdir(temp_dir)
-
-    print(f'{model.getconn._omc_process.pid}')
-
-    results = []
-    for i in indices:
-        initial_values = [values[i] for values in input_values]
-        # TODO: use interface provided by ModelicaSystem
-        getExeFile = os.path.join(os.getcwd(), '{}.{}'.format(model_name, "exe")).replace("\\", "/")
-
-        result_file = construct_resultfile_name(model_name, i)
-
-        sim_options = (
-            f'startTime={start_time},stopTime={stop_time},stepSize={step_size},'
-            f'tolerance={tolerance},solver=\"{method}\"')
-
-        values1 = ','.join("%s=%s" % (key, val) for (key, val) in zip(initial_names, initial_values))
-        override = " -override=" + values1 + ',' + sim_options
-        model.getconn.sendExpression("simulate(" + model_name + "," + sim_options + ")")
-
-        cmd = getExeFile + override + ' -r=' + result_file
-        omhome = os.path.join(os.environ.get("OPENMODELICAHOME"))
-        dllPath = os.path.join(omhome, "bin").replace("\\", "/") + os.pathsep + os.path.join(omhome,
-                                                                                             "lib/omc").replace(
-            "\\", "/") + os.pathsep + os.path.join(omhome, "lib/omc/cpp").replace("\\",
-                                                                                  "/") + os.pathsep + os.path.join(
-            omhome, "lib/omc/omsicpp").replace("\\", "/")
-        my_env = os.environ.copy()
-        my_env["PATH"] = dllPath + os.pathsep + my_env["PATH"]
-        p = subprocess.Popen(cmd, env=my_env)
-        p.wait()
-        p.terminate()
-
-        result = model.getSolutions(final_names, resultfile=result_file)
-        # print(f'Results from {model.getconn._omc_process.pid}: {result}')
-
-        results.append((i, result_transformation(result)))
-    return results, []
+def stop_omc_process(model):
+    # Explicitly quit the OMC process
+    try:
+        model.getconn.execute("quit()")  # Send quit command to OMC
+        model.getconn._omc_process.wait(timeout=5.0)  # Wait for process to terminate
+    except Exception as e:
+        print(f"Error while terminating OMC process: {e}")
+    finally:
+        # Kill the process if it hasn't exited
+        if model.getconn._omc_process.poll() is None:
+            model.getconn._omc_process.kill()
+        del model  # Explicitly delete the model object
 
 
 def construct_resultfile_name(model_name, index):
-    return os.path.join(os.getcwd(), f'{model_name}_{index}.mat'.replace(' ', '_'))
+    return os.path.join(f'{model_name}_{index}.mat'.replace(' ', '_'))
 
 
-def construct_build_dir(model_name, index):
-    return os.path.join(os.getcwd(), f'{model_name}_{index}'.replace(' ', '_'))
+def construct_build_dir(model_name, indices):
+    index_appendix = f'{indices[0]}_{indices[-1]}' if len(indices) > 1 else f'{indices[0]}'
+    return os.path.join(os.getcwd(), f'{model_name}_{index_appendix}'.replace(' ', '_'))
