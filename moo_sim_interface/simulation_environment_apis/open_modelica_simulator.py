@@ -8,7 +8,6 @@ from typing import Union
 
 import numpy as np
 
-from moo_sim_interface.utils.OMPythonFast import ModelicaSystemFast
 from moo_sim_interface.utils.batched_iterator import BatchedIterator
 from moo_sim_interface.utils.dependency_installer import install_openmodelica_package
 from moo_sim_interface.utils.post_simulation_data_processor import PostSimulationDataProcessor
@@ -26,6 +25,9 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
 
     if version("OMPython") > "3.4.9":
         model_path = model_path.as_posix()
+    if version("OMPython") < "3.6.0":
+        print('\033[93m' + 'Warning: The current version of OMPython is not supported. Upgrade to version 3.6.0 or '
+                           'proceed at your own risk.' + '\033[0m')
 
     post_simulation_data_processor = PostSimulationDataProcessor(args.get('post_simulation_options'), [])
     pre_sim_scripts = args.get('pre_sim_scripts')
@@ -50,6 +52,8 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
     indices = list(np.ndindex(input_values[0].shape if len(input_values) > 0 else (1,)))
 
     if num_chunks == 1:
+        from moo_sim_interface.utils.OMPythonFast import ModelicaSystemFast
+
         model = ModelicaSystemFast(model_path, model_name, commandLineOptions='--demoMode')
         for script in pre_sim_scripts:
             res = model.getconn.execute("runScript(\"" + script + "\")")
@@ -167,6 +171,8 @@ def simulate_model_worker(indices, final_names, initial_names, input_values, met
 
 
 def create_omc_process(indices, model_path, model_name, pre_sim_scripts):
+    from moo_sim_interface.utils.OMPythonFast import ModelicaSystemFast
+
     # create one tmp build dir for multiple indices
     build_dir = construct_build_dir(model_name, indices)
     os.mkdir(build_dir)
