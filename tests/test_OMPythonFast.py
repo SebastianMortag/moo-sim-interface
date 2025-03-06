@@ -38,4 +38,5 @@ def test_modelica_system_fast_double_pendulum():
 
     assert result is not None
     assert isinstance(result, List)
-    assert len(result) == 502
+    assert len(result) == 1
+    assert len(result[0]) == 502
