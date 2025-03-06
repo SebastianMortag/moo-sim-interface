@@ -2,6 +2,7 @@ import math
 import numbers
 import pathlib
 import re
+import sys
 import types
 
 
@@ -72,7 +73,12 @@ def check_general_options(general_options: dict):
         if general_options.get('model_name') is None:
             raise ValueError('model_name is not set in the simulation configuration!')
         if general_options.get('simulator_path') is None:
-            raise ValueError('simulator_path is not set in the simulation configuration!')
+            # on Windows, the path must be set to the bin directory of the OpenModelica installation:
+            if sys.platform == 'win32':
+                raise ValueError('simulator_path is not set in the simulation configuration! Please point to the '
+                                 'simulator installation directory!')
+            elif sys.platform == 'linux':
+                print('Warning: simulator_path is not set. Trying to infer the simulator directory...')
         if not pathlib.Path(general_options.get('simulator_path')).is_dir():
             raise ValueError('Invalid simulator_path, must be a directory!')
 

@@ -15,6 +15,6 @@ repos:
   hooks:
     - id: pytest
       name: Run pytest
-      entry: bash -c 'SKIP_ONLINE_TESTS=true PYTHONPATH=$(pwd) pytest'
+      entry: bash -c 'SKIP_DOCKER_TESTS=true PYTHONPATH=$(pwd) pytest'
       language: system
       types: [python]

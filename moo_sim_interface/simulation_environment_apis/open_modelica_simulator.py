@@ -82,7 +82,7 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
 
 
 def run_simulation_in_order(final_names, indices, initial_names, input_values, method, model, start_time, step_size,
-                            stop_time, tolerance, result_transformation):
+                            stop_time, tolerance, result_transformation) -> list[list]:
     combined_results = []
     for i in indices:
         initial_values = [values[i] for values in input_values]  # set the start values
@@ -102,13 +102,12 @@ def run_simulation_in_order(final_names, indices, initial_names, input_values, m
 
 def run_simulation_in_parallel(final_names, indices, initial_names, input_values, method, model_path, model_name,
                                start_time, step_size, stop_time, tolerance, num_chunks,
-                               result_transformation, pre_sim_scripts, post_sim_scripts):
+                               result_transformation, pre_sim_scripts, post_sim_scripts) -> list[list]:
     print(f'Running simulation in parallel with {num_chunks} chunks.')
 
     batch_size = ceil(len(indices) / num_chunks)  # calculate the batch size and work on all batches in parallel
 
     batched_indices = [batch for batch in BatchedIterator(indices, batch_size)]
-    print(f'Batched indices: {batched_indices}')
 
     # Prepare the arguments to be passed to each worker
     worker_args = [
@@ -151,7 +150,6 @@ def simulate_model_worker(indices, final_names, initial_names, input_values, met
         # Retrieve results
         result = model.getSolutions(final_names)
         collected_results.append(result)
-        print(f'Results from process {model.getconn._omc_process.pid}')
 
     # Run post-simulation scripts
     for script in post_sim_scripts:
@@ -200,7 +198,7 @@ def stop_omc_process(model):
 
 
 def construct_resultfile_name(model_name, index):
-    return os.path.join(f'{model_name}_{index}.mat'.replace(' ', '_'))
+    return f'{model_name}_{index}.mat'.replace(' ', '_')
 
 
 def construct_build_dir(model_name, indices):
