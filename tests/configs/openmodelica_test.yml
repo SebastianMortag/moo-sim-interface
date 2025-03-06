@@ -13,7 +13,7 @@ model_file: /home/hostuser/.openmodelica/libraries/Modelica 4.0.0+maint.om/packa
 model_name: Modelica.Mechanics.MultiBody.Examples.Elementary.DoublePendulum # For fmus containing one model, can be empty
 solver: dassl # solver/method, FMUs support only cvode and euler, leave empty to use the default solver
 
-simulator_path: None # Path to the simulator installation, can be empty if Model file is an FMU
+simulator_path: # Path to the simulator installation, can be empty if Model file is an FMU
 
 pre_sim_scripts: [ ] # run scripts ahead of the simulation, load libraries, etc.
 post_sim_scripts: [ ] # run scripts after the simulation, scripts are executed after the simulation results are returned and have no effect on the post-processing performed by the moo-sim-interface
