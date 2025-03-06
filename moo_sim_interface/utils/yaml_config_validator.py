@@ -72,6 +72,7 @@ def check_general_options(general_options: dict):
     if not general_options.get('model_file').endswith('.fmu'):
         if general_options.get('model_name') is None:
             raise ValueError('model_name is not set in the simulation configuration!')
+
         if general_options.get('simulator_path') is None:
             # on Windows, the path must be set to the bin directory of the OpenModelica installation:
             if sys.platform == 'win32':
@@ -79,8 +80,9 @@ def check_general_options(general_options: dict):
                                  'simulator installation directory!')
             elif sys.platform == 'linux':
                 print('Warning: simulator_path is not set. Trying to infer the simulator directory...')
-        if not pathlib.Path(general_options.get('simulator_path')).is_dir():
-            raise ValueError('Invalid simulator_path, must be a directory!')
+        else:
+            if not pathlib.Path(general_options.get('simulator_path')).is_dir():
+                raise ValueError('Invalid simulator_path, must be a directory!')
 
     if not isinstance(general_options.get('pre_sim_scripts'), list):
         raise ValueError('Invalid pre_sim_scripts, must be a list!')
