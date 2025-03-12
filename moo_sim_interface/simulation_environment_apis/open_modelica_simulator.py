@@ -159,9 +159,8 @@ def simulate_model_worker(indices, final_names, initial_names, input_values, met
 
     stop_omc_process(model)
 
-    # Remove the build directory
     try:
-        shutil.rmtree(build_dir)
+        shutil.rmtree(build_dir)  # Remove the build directory
     except Exception as e:
         print(f"Error removing build directory {build_dir}: {e}")
 

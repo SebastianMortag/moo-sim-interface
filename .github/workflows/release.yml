@@ -43,7 +43,7 @@ jobs:
         release_name: Release ${{ steps.bump_version.outputs.new_tag }}
         body: |
           Changes in this release:
-          - ...
+          Changelist wip
         draft: false
         prerelease: false
       env:
