@@ -148,8 +148,9 @@ def check_simulation_setup(simulation_setup: dict):
 
 
 def check_post_simulation_options(post_simulation_options: dict):
-    if post_simulation_options.get('save_results_options') not in ['csv', 'txt', 'None']:
-        raise ValueError('Invalid save options, choose either csv or txt or None!')
+    if post_simulation_options.get('save_results_options') is not None:
+        if post_simulation_options.get('save_results_options') not in ['csv', 'txt', 'None']:
+            raise ValueError('Invalid save options, choose either csv or txt or None!')
 
     if not isinstance(post_simulation_options.get('print_results'), bool):
         raise ValueError('Invalid print results option, choose either True or False!')
