@@ -10,8 +10,6 @@ simulation setup, execution and evaluation via a generic text-based interface. I
 simulations and parameter sweeps. Furthermore, it provides a generic interface for Multi-Objective-Optimization.
 """
 
-packages = ['moo_sim_interface']
-
 install_requires = ['fmpy', 'dask[bag]', 'numpy', 'PyYAML', 'plotly', 'matplotlib', 'requests']
 
 extras_require = {
