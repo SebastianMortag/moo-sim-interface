@@ -7,7 +7,7 @@ version: 0.3 # The version of the package this .yml file corresponds to.
 simulation_environment: FMU
 
 # Model File: The filename of the package or FMU containing the model. FMUs must be located in the "fmus" directory.
-model_file: examples/PV_Battery_Heat_System.Example_System.fmu # alternatively: provide an absolute path to the .mo or .fmu file
+model_file: examples/PV_Battery_Heat_System_Example_System.fmu # alternatively: provide an absolute path to the .mo or .fmu file
 
 # Name and path of the model within the Model file
 model_name: # For fmus containing one model, can be empty
