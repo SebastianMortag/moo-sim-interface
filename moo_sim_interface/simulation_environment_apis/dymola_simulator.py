@@ -99,7 +99,7 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
 
 
 def do_single_simulation(dymola_instance, save_trajectories, *sim_args):
-    print(f'Doing single sim with values: {sim_args[-2]}')
+    print(f'Running simulation with values: {sim_args[-2]}')
     try:
         if save_trajectories:
             (problem, start_time, stop_time, number_of_intervals, output_interval, method, tolerance, fixed_step_size,
@@ -134,7 +134,8 @@ def do_single_simulation(dymola_instance, save_trajectories, *sim_args):
 
 
 def do_multi_simulation(dymola_instance, save_trajectories, *sim_args):
-    print(f'Doing multi sim with values: {sim_args[-3]}')
+    print(f'Running {len(sim_args[-3])} sweeps with '
+          f'{"values: " + str(sim_args[-3]) if np.size(sim_args[-3]) < 10 else str(np.size(sim_args[-3])) + " values"}')
     try:
         if save_trajectories:
             output = dymola_instance.simulateMultiResultsModel(*sim_args)

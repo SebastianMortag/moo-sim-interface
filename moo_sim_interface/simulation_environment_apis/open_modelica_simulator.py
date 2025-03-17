@@ -103,7 +103,7 @@ def run_simulation_in_order(final_names, indices, initial_names, input_values, m
 def run_simulation_in_parallel(final_names, indices, initial_names, input_values, method, model_path, model_name,
                                start_time, step_size, stop_time, tolerance, num_chunks,
                                result_transformation, pre_sim_scripts, post_sim_scripts) -> list[list]:
-    print(f'Running simulation in parallel with {num_chunks} chunks.')
+    print(f'Running simulation in parallel with {num_chunks} workers.')
 
     batch_size = ceil(len(indices) / num_chunks)  # calculate the batch size and work on all batches in parallel
 
