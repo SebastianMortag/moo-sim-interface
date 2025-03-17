@@ -125,9 +125,9 @@ For example: ```ModelicaSystem(model_path, model_name, commandLineOptions='--dem
 _Simulations Flags (C Runtime Simulation Flags):_
 * ```-lv=-LOG_SUCCESS``` Disable messages like "Simulation finished successfully"
 For example: ```model.simulate(simflags='-lv=-LOG_SUCCESS')```
-* ```-lv=-stdout``` Disable all messages written to stdout
-* ```-lv=-assert``` Disable all assert messages of type Info
-For OpenModelica v1.21 and below please use: ```-LOG_STDOUT``` and ```-LOG_ASSERT```
+* ```-lv=-LOG_STDOUT``` Disable all messages written to stdout
+* ```-lv=-LOG_ASSERT``` Disable all assert messages of type Info
+For OpenModelica v1.21 and below please use: ```-stdout``` and ```-assert```
 
 ## Planned Features
 * Auto-remove OM/Dymola result files after successful simulations

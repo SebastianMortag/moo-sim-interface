@@ -48,6 +48,11 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
         step_size = (stop_time - start_time) / number_of_intervals
     method = args.get('solver')
     tolerance = sim_params.get('tolerance')
+    flags = args.get('sim_flags')
+    if len(flags) == 0:
+        flags = None
+    else:
+        flags = ' '.join(flags)
 
     indices = list(np.ndindex(input_values[0].shape if len(input_values) > 0 else (1,)))
 
@@ -61,7 +66,8 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
                 print(f'Failed to execute script: {script}')
 
         combined_results = run_simulation_in_order(final_names, indices, input_names, input_values, method, model,
-                                                   start_time, step_size, stop_time, tolerance, result_transformation)
+                                                   start_time, step_size, stop_time, tolerance, flags,
+                                                   result_transformation)
 
         for script in post_sim_scripts:
             res = model.getconn.execute("runScript(\"" + script + "\")")
@@ -71,7 +77,7 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
     else:
         combined_results = run_simulation_in_parallel(final_names, indices, input_names, input_values, method,
                                                       model_path, model_name, start_time, step_size, stop_time,
-                                                      tolerance, num_chunks, result_transformation,
+                                                      tolerance, flags, num_chunks, result_transformation,
                                                       pre_sim_scripts, post_sim_scripts)
 
     processed_results = post_simulation_data_processor.do_post_processing(args, input_values, combined_results,
@@ -82,7 +88,7 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
 
 
 def run_simulation_in_order(final_names, indices, initial_names, input_values, method, model, start_time, step_size,
-                            stop_time, tolerance, result_transformation) -> list[list]:
+                            stop_time, tolerance, flags, result_transformation) -> list[list]:
     combined_results = []
     for i in indices:
         initial_values = [values[i] for values in input_values]  # set the start values
@@ -91,7 +97,7 @@ def run_simulation_in_order(final_names, indices, initial_names, input_values, m
         model.setSimulationOptions(
             [f'startTime={start_time}', f'stopTime={stop_time}', f'stepSize={step_size}', f'solver={method}',
              f'tolerance={tolerance}'])
-        model.simulate()  # simflags='-noEventEmit'
+        model.simulate(simflags=flags)  # simflags='-noEventEmit'
         # model.simulate(simflags='-lv=-assert,-stdout')  # simflags='-noEventEmit'
         results = model.getSolutions(final_names)
 
@@ -101,7 +107,7 @@ def run_simulation_in_order(final_names, indices, initial_names, input_values, m
 
 
 def run_simulation_in_parallel(final_names, indices, initial_names, input_values, method, model_path, model_name,
-                               start_time, step_size, stop_time, tolerance, num_chunks,
+                               start_time, step_size, stop_time, tolerance, flags, num_chunks,
                                result_transformation, pre_sim_scripts, post_sim_scripts) -> list[list]:
     print(f'Running simulation in parallel with {num_chunks} workers.')
 
@@ -112,7 +118,7 @@ def run_simulation_in_parallel(final_names, indices, initial_names, input_values
     # Prepare the arguments to be passed to each worker
     worker_args = [
         (indices, final_names, initial_names, input_values, method, model_path, model_name, start_time, step_size,
-         stop_time, tolerance, pre_sim_scripts, post_sim_scripts)
+         stop_time, tolerance, flags, pre_sim_scripts, post_sim_scripts)
         for indices in batched_indices]
 
     with multiprocessing.Pool(processes=num_chunks) as pool:
@@ -129,7 +135,7 @@ def run_simulation_in_parallel(final_names, indices, initial_names, input_values
 
 
 def simulate_model_worker(indices, final_names, initial_names, input_values, method, model_path, model_name,
-                          start_time, step_size, stop_time, tolerance, pre_sim_scripts, post_sim_scripts):
+                          start_time, step_size, stop_time, tolerance, flags, pre_sim_scripts, post_sim_scripts):
     model, build_dir = create_omc_process(indices, model_path, model_name, pre_sim_scripts)
 
     collected_results = []
@@ -145,7 +151,7 @@ def simulate_model_worker(indices, final_names, initial_names, input_values, met
         result_file = construct_resultfile_name(model_name, index)
 
         # Simulate the model
-        model.simulate(resultfile=result_file)
+        model.simulate(resultfile=result_file, simflags=flags)
 
         # Retrieve results
         result = model.getSolutions(final_names)

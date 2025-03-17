@@ -99,6 +99,13 @@ def check_general_options(general_options: dict):
     if general_options.get('n_chunks') is None or not isinstance(general_options.get('n_chunks'), int):
         raise ValueError('Invalid n_chunks, choose an integer value!')
 
+    if not isinstance(general_options.get('sim_flags'), list):
+        raise ValueError('Invalid sim_flags, must be a list!')
+    for flag in general_options.get('sim_flags'):
+        if not isinstance(flag, str):
+            raise ValueError('Invalid sim_flags, must be a list of strings from '
+                             'https://openmodelica.org/doc/OpenModelicaUsersGuide/latest/simulationflags.html')
+
 
 def check_simulation_setup(simulation_setup: dict):
     if (not isinstance(simulation_setup.get('step_size'), numbers.Real) or
