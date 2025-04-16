@@ -6,7 +6,8 @@ from typing import Callable
 import numpy as np
 import yaml
 
-from moo_sim_interface.utils.yaml_config_validator import validate_simulation_configuration
+from moo_sim_interface.utils.yaml_config_validator import validate_simulation_configuration, \
+    validate_optimization_configuration
 from moo_sim_interface.utils.yaml_loader import CustomSafeLoader
 
 
@@ -42,6 +43,13 @@ def prepare_simulation_environment(args: dict):
         input_values = np.array(input_parameter_values, dtype=np.float64)
     return (model_filename, model_path, input_values, input_parameter_names, num_chunks, output_parameter_names,
             sync_execution, time_modulo, result_transformation)
+
+
+def prepare_optimization_environment(args: dict):
+    # check if kip function is callable or string
+    # if string, check for ':' and parse it as file path and method name, or use main as method name
+    # TODO: implement this
+    pass
 
 
 def parse_input_range(input_range: str) -> list:
@@ -118,21 +126,36 @@ def merge_dicts(config: dict, injection: dict):
                 config[key] = value
 
 
-def parse_config_file(config_file_path: str = 'generic/simulation_config.yml',
-                      overwrite_config: list[dict] = None) -> dict:
+def _parse_config_file(config_file_path: str, overwrite_config: list[dict] = None) -> dict:
     config_file = pathlib.Path(config_file_path)
     if not config_file.is_absolute():
         config_file = pathlib.Path(os.getcwd()) / 'configs' / config_file_path
 
     with open(config_file, 'r') as file:
         # use a custom yaml loader, that parses "x:y:z" as start:step:stop range instead of the default day:hour:minute
-        simulation_config = yaml.load(file, Loader=CustomSafeLoader)
+        config = yaml.load(file, Loader=CustomSafeLoader)
 
         if overwrite_config is not None:
             for injection in overwrite_config:
-                merge_dicts(simulation_config, injection)
+                merge_dicts(config, injection)
+        return config
 
-        if validate_simulation_configuration(simulation_config):
-            return simulation_config
-        else:
-            raise ValueError('Invalid simulation configuration file!')
+
+def parse_sim_config_file(config_file_path: str = 'generic/simulation_config.yml',
+                          overwrite_config: list[dict] = None) -> dict:
+    simulation_config = _parse_config_file(config_file_path, overwrite_config)
+
+    if validate_simulation_configuration(simulation_config):
+        return simulation_config
+    else:
+        raise ValueError('Invalid simulation configuration file!')
+
+
+def parse_moo_config_file(config_file_path: str = 'generic/optimization_config.yml',
+                          overwrite_config: list[dict] = None) -> dict:
+    optimization_config = _parse_config_file(config_file_path, overwrite_config)
+
+    if validate_optimization_configuration(optimization_config):
+        return optimization_config
+    else:
+        raise ValueError('Invalid optimization configuration file!')

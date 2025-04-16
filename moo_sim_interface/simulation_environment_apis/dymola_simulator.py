@@ -45,7 +45,6 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
 
     dymola_instance.openModel(model_filename, changeDirectory=False)
 
-    problem = model_name
     start_time = sim_params.get('start_time')
     stop_time = sim_params.get('stop_time')
     step_size = sim_params.get('step_size')
@@ -67,8 +66,8 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
             initial_values = [values[i] for values in input_values]  # set the start values
             result_file = '_'.join([model_name, str(i)])
 
-            results = do_single_simulation(dymola_instance, save_trajectories, problem, start_time, stop_time,
-                                           number_of_intervals,
+            results = do_single_simulation(dymola_instance, save_trajectories, model_name, start_time,
+                                           stop_time, number_of_intervals,
                                            output_interval, method, tolerance, fixed_step_size, result_file,
                                            input_parameter_names, initial_values, output_parameter_names)
 
@@ -79,8 +78,8 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
             initial_values = [[values[i] for values in input_values] for i in batch]  # set the start values
             result_file = '_'.join([model_name, str(batch[0]), str(batch[-1])])
 
-            results = do_multi_simulation(dymola_instance, save_trajectories, problem, start_time, stop_time,
-                                          number_of_intervals,
+            results = do_multi_simulation(dymola_instance, save_trajectories, model_name, start_time,
+                                          stop_time, number_of_intervals,
                                           output_interval, method, tolerance, fixed_step_size, result_file,
                                           input_parameter_names, initial_values, output_parameter_names, [])
 
@@ -102,10 +101,10 @@ def do_single_simulation(dymola_instance, save_trajectories, *sim_args):
     print(f'Running simulation with values: {sim_args[-2]}')
     try:
         if save_trajectories:
-            (problem, start_time, stop_time, number_of_intervals, output_interval, method, tolerance, fixed_step_size,
+            (model, start_time, stop_time, number_of_intervals, output_interval, method, tolerance, fixed_step_size,
              result_file, initial_names, initial_values, final_names) = sim_args
 
-            output = dymola_instance.simulateMultiResultsModel(problem, start_time, stop_time, number_of_intervals,
+            output = dymola_instance.simulateMultiResultsModel(model, start_time, stop_time, number_of_intervals,
                                                                output_interval, method, tolerance, fixed_step_size,
                                                                result_file, initial_names, [initial_values], final_names
                                                                , [])

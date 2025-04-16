@@ -20,6 +20,8 @@ post_sim_scripts: [ ] # run scripts after the simulation, scripts are executed a
 
 n_chunks: 1 # Number of chunks to divide the workload (parallel processing). Choose 1 to disable parallel processing.
 
+sim_flags: [ ] # additional simulation flags, for example '-lv=-LOG_SUCCESS' and '-noEventEmit'. Only for OpenModelica
+
 # Simulation Setup: The parameters are used to configure the simulation environment.
 simulation_setup:
   start_time: 0.0

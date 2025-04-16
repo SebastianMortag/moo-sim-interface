@@ -20,6 +20,10 @@ def validate_simulation_configuration(simulation_config: dict) -> bool:
     return True
 
 
+def validate_optimization_configuration(optimization_config: dict) -> bool:
+    return True
+
+
 def check_experimental_options(simulation_config: dict) -> bool:
     experimental_options = simulation_config.get('experimental_options')
     simulation_config['simulation_setup']['safe_mode_type'] = experimental_options.get('safe_mode_type')

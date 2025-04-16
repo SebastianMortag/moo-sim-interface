@@ -16,7 +16,7 @@ from fmpy.fmi2 import FMU2Slave
 import moo_sim_interface
 from moo_sim_interface.utils.post_simulation_data_processor import PostSimulationDataProcessor
 from moo_sim_interface.utils.recursively_ordered_dict import RecursivelyOrderedDict
-from moo_sim_interface.utils.yaml_config_parser import parse_config_file, prepare_simulation_environment
+from moo_sim_interface.utils.yaml_config_parser import parse_sim_config_file, prepare_simulation_environment
 
 SIMULATION_RAMP_UP_TIME = 0.02
 
@@ -196,6 +196,6 @@ def handle_error(args, i, zipped, all_parameters_simulation_results, exception):
     elif safe_mode_type == 4:
         alt_config = args[3].get('alt_config_file')
         print(f'Error occurred, running alternative configuration: {alt_config}')
-        moo_sim_interface.simulator_api.sim_env_apis_wrapper(**parse_config_file(alt_config))
+        moo_sim_interface.simulator_api.sim_env_apis_wrapper(**parse_sim_config_file(alt_config))
         all_parameters_simulation_results.append({alt_config})
         zipped.append((i, alt_config))

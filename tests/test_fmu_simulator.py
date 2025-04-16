@@ -32,7 +32,7 @@ def test_fmu_simulator_1_year_example_system_10parallel_simulations(base_path: P
 
     monkeypatch.chdir(base_path / "..")
 
-    config = 'examples/pv_heat_example_config.yml'
+    config = 'sim_examples/pv_heat_example_config.yml'
 
     overwrite = {'post_simulation_options': {'save_results_options': 'None'}}
     res = run_simulations(sim_config_file=config, overwrite_config=[overwrite], return_results=True)
@@ -53,7 +53,7 @@ def test_fmu_simulator_1_year_example_system_10parallel_simulations(base_path: P
 def test_fmu_simulator_1_year_example_system(base_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.chdir(base_path / "..")
 
-    config = 'examples/pv_heat_example_config.yml'
+    config = 'sim_examples/pv_heat_example_config.yml'
 
     overwrite_csv = {'post_simulation_options': {'save_results_options': 'None'}}
     overwrite_parallel = {'n_chunks': 1}
