@@ -67,3 +67,8 @@ class ModelicaSystemFast(ModelicaSystem):
                 exp2 = "closeSimulationResultFile()"
                 self.getconn.sendExpression(exp2)
                 return res
+
+    def setTempDirectory(self, customBuildDirectory):
+        if customBuildDirectory is not None:
+            os.makedirs(customBuildDirectory, exist_ok=True)
+        super().setTempDirectory(customBuildDirectory)

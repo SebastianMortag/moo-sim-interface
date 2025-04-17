@@ -40,8 +40,25 @@ def prepare_simulation_environment(args: dict):
         input_values = np.array(np.meshgrid(*input_parameter_values, indexing='ij'), dtype=np.float64)
     else:
         input_values = np.array(input_parameter_values, dtype=np.float64)
+
+    custom_build_dir = args.get('custom_build_dir')
+    if custom_build_dir is None:
+        if args.get('model_name') is None:
+            model_name = model_path.stem
+        else:
+            model_name = args.get('model_name')
+        custom_build_dir = os.path.join(os.getcwd(), model_name)
+    elif custom_build_dir == 'None':
+        custom_build_dir = None
+    else:
+        custom_build_path = pathlib.Path(custom_build_dir)
+        if not custom_build_path.is_absolute():
+            custom_build_dir = os.path.join(os.getcwd(), custom_build_dir)
+        else:
+            custom_build_dir = custom_build_path
+
     return (model_filename, model_path, input_values, input_parameter_names, num_chunks, output_parameter_names,
-            sync_execution, time_modulo, result_transformation)
+            sync_execution, time_modulo, result_transformation, custom_build_dir)
 
 
 def parse_input_range(input_range: str) -> list:

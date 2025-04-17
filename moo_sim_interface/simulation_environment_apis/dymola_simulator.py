@@ -1,3 +1,4 @@
+import os
 from typing import Union
 
 import numpy as np
@@ -22,7 +23,7 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
         from dymola.dymola_interface import DymolaInterface
 
     (model_filename, model_path, input_values, input_parameter_names, num_chunks, output_parameter_names,
-     sync_execution, time_modulo, result_transformation) = prepare_simulation_environment(args)
+     sync_execution, time_modulo, result_transformation, custom_build_dir) = prepare_simulation_environment(args)
 
     post_simulation_data_processor = PostSimulationDataProcessor(args.get('post_simulation_options'), [])
 
@@ -44,6 +45,10 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
         dymola_instance.RunScript(script)
 
     dymola_instance.openModel(model_filename, changeDirectory=False)
+
+    if custom_build_dir is not None:
+        os.makedirs(custom_build_dir, exist_ok=True)
+        dymola_instance.cd(custom_build_dir)
 
     problem = model_name
     start_time = sim_params.get('start_time')
