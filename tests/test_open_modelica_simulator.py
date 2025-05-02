@@ -2,7 +2,6 @@ import os
 
 import numpy as np
 import pytest
-import shutil
 
 from moo_sim_interface.simulator_api import run_simulations
 
@@ -83,8 +82,6 @@ def test_open_modelica_simulator_custom_build_dir():
     assert os.path.exists(custom_build_dir)
     assert os.path.exists(
         os.path.join(custom_build_dir, 'Modelica.Mechanics.MultiBody.Examples.Elementary.DoublePendulum_res.mat'))
-
-    shutil.rmtree(custom_build_dir)
 
 
 @skip_docker
