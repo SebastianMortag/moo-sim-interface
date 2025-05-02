@@ -23,7 +23,7 @@ SIMULATION_RAMP_UP_TIME = 0.02
 
 def run_fmu_simulation(return_results: bool = False, **kwargs) -> Union[None, list]:
     (fmu_filename, fmu_path, input_values, input_parameter_names, num_chunks, output_parameter_names, sync_execution,
-     time_modulo, result_transformation) = prepare_simulation_environment(kwargs)
+     time_modulo, result_transformation, _) = prepare_simulation_environment(kwargs)
 
     if kwargs.get('model_name') is None:
         model_name = fmu_path.stem

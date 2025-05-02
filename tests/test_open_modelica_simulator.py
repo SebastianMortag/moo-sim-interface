@@ -64,3 +64,40 @@ def test_open_modelica_simulator_5parallel_100simulations():
         assert len(res[i][1]) == 2  # retrieving two variables from the simulation
         assert len(res[i][1][0]) == 502  # 502 results for a simulation with 500 steps
         assert len(res[i][1][1]) == 502  # 502 results for a simulation with 500 steps
+
+
+@skip_docker
+def test_open_modelica_simulator_custom_build_dir():
+    config = 'openmodelica_test.yml'
+
+    custom_build_dir = os.path.join(os.getcwd(), 'custom_build')
+    overwrite = [{'custom_build_dir': custom_build_dir}]
+    res = run_simulations(sim_config_file=config, overwrite_config=overwrite, return_results=True)
+
+    # res should be a list of tuples, containing two lists with results
+    assert res is not None
+    assert len(res) == 1
+
+    # there should be a custom build directory with a _res.mat file inside
+    assert os.path.exists(custom_build_dir)
+    assert os.path.exists(
+        os.path.join(custom_build_dir, 'Modelica.Mechanics.MultiBody.Examples.Elementary.DoublePendulum_res.mat'))
+
+
+@skip_docker
+def test_open_modelica_simulator_empty_custom_build_dir():
+    config = 'openmodelica_test.yml'
+
+    model_name = 'Modelica.Mechanics.MultiBody.Examples.Elementary.DoublePendulum'
+    custom_build_dir = os.path.join(os.getcwd(), model_name)
+    overwrite = [{'custom_build_dir': None}]
+    res = run_simulations(sim_config_file=config, overwrite_config=overwrite, return_results=True)
+
+    # res should be a list of tuples, containing two lists with results
+    assert res is not None
+    assert len(res) == 1
+
+    # there should be a custom build directory named after the model name with a _res.mat file inside
+    assert os.path.exists(custom_build_dir)
+    assert os.path.exists(
+        os.path.join(custom_build_dir, model_name + '_res.mat'))

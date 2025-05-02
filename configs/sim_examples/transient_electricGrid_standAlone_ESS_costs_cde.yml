@@ -18,6 +18,9 @@ simulator_path: # Path to the simulator installation, can be empty if Model file
 pre_sim_scripts: [ ] # run scripts ahead of the simulation, load libraries, etc.
 post_sim_scripts: [ ] # run scripts after the simulation, scripts are executed after the simulation results are returned and have no effect on the post-processing performed by the moo-sim-interface
 
+# Path to a custom build directory, relative to the current working directory or absolute path.
+custom_build_dir: None # None: use the simulation environment default behaviour. If empty, uses the model_name as build directory.
+
 n_chunks: 10 # Number of chunks to divide the workload (parallel processing). Choose 1 to disable parallel processing.
 
 sim_flags: [ ] # additional simulation flags, for example '-lv=-LOG_SUCCESS' and '-noEventEmit'. Only for OpenModelica
