@@ -1,7 +1,7 @@
 import argparse
 from typing import Union
 
-from moo_sim_interface.multi_objective_optimization_apis import paref_optimizer
+from moo_sim_interface.multi_objective_optimization_apis import paref_optimizer, pymoo_optimizer
 from moo_sim_interface.utils.yaml_config_parser import parse_moo_config_file
 
 
@@ -9,6 +9,8 @@ def moo_env_apis_wrapper(return_results: bool = False, **args) -> Union[None, li
     optimizer_environment = args.get('package').lower()
     if optimizer_environment == 'paref':
         results = paref_optimizer.run_optimization(return_results=return_results, **args)
+    elif optimizer_environment == 'pymoo':
+        results = pymoo_optimizer.run_optimization(return_results=return_results, **args)
     else:
         raise ValueError(f'Unknown Optimization Environment: {optimizer_environment}')
 
@@ -48,5 +50,3 @@ def run_optimizations(
 
 if __name__ == '__main__':
     main()
-    # TODO: moo example mit example config file, zB ein OpenModelica Modell als FMU, im nächsten Schritt auch mit
-    #  Python KPI calculator

@@ -5,20 +5,20 @@ version: 0.4 # The version of the package this .yml file corresponds to.
 
 package: paref # choose either paref or platypus
 
-simulation_config: generic/simulation_config.yml # relative or absolute path to the simulation configuration file
+simulation_config: sim_examples/pv_ess_heat_house.yml # relative or absolute path to the simulation configuration file
 
-lower_bounds: [ 0, 0, 0, 0, 0 ] # lower bounds for the optimization parameters
-upper_bounds: [ 1, 1, 1, 1, 1 ] # upper bounds for the optimization parameters
+lower_bounds: [ 100, 10 ] # lower bounds for the optimization parameters
+upper_bounds: [ 1000, 100 ] # upper bounds for the optimization parameters
 
 paref_args:
   latin_hypercube_samples: 100 # number of samples for the latin hypercube sampling, 0: no sampling is performed
-  n_parallelization_for_sampling: 0 # number of simultaneous simulations, 0: no parallelization
+  n_parallelization_for_sampling: 20 # number of simultaneous simulations, 0: no parallelization
   store_intermediate_results: False # store intermediate results
   load_intermediate_results: False # load the latest intermediate results
   intermediate_results_type: partial # either basis or partial, basis: load the results and append a new optimization run, partial: load the results and continue the optimization from the last point
   optimization_steps:
     - findEdgePoints: 5 # find 2D edge points with up to 25 evaluations
-    - fillGaps: 10 # fill gaps with up to 30 evaluations
+    - fillGaps: 20 # fill gaps with up to 30 evaluations
 
 kpi_calculation: # pass additional information to the kpi calculation
   kpis: [ ] # cost function results; if empty, expects 2 output variables in the simulation configuration file

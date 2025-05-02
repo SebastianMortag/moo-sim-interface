@@ -14,13 +14,13 @@ install_requires = ['fmpy', 'dask[bag]', 'numpy', 'PyYAML', 'plotly', 'matplotli
 
 extras_require = {
     'develop': ['pytest', 'pytest-cov', 'flake8', 'pre-commit'],
+    'optimization': ['paref', 'pymoo'],
     # 'dymola': ['dymola'],
     # 'openmodelica': ['OMPython'],
-    # 'fmu': ['fmpy']
 }
 
 setup(name='moo_sim_interface',
-      version='0.3.5',
+      version='0.4.0',
       description='A generic interface for Modelica/FMU simulation and optimization',
       long_description=long_description,
       author='Sebastian Mortag',
