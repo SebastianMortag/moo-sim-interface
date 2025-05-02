@@ -37,9 +37,9 @@ def prepare_simulation_environment(args: dict):
                               input_list in input_parameter_values]
 
     if create_mesh:
-        input_values = np.array(np.meshgrid(*input_parameter_values, indexing='ij'), dtype=object)
+        input_values = np.array(np.meshgrid(*input_parameter_values, indexing='ij'), dtype=np.float64)
     else:
-        input_values = np.array(input_parameter_values, dtype=object)
+        input_values = np.array(input_parameter_values, dtype=np.float64)
 
     custom_build_dir = args.get('custom_build_dir')
     if custom_build_dir is None:
