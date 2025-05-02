@@ -97,7 +97,8 @@ def check_general_options(general_options: dict):
             raise ValueError('Invalid post_sim_scripts, must be a list of valid files!')
 
     if general_options.get('custom_build_dir') is not None and general_options.get('custom_build_dir') != 'None':
-        raise ValueError('Invalid custom_build_dir, must be empty, None or a directory!')
+        if not isinstance(general_options.get('custom_build_dir'), str):
+            raise ValueError('Invalid custom_build_dir, must be empty, None or a directory!')
 
     if general_options.get('n_chunks') is None or not isinstance(general_options.get('n_chunks'), int):
         raise ValueError('Invalid n_chunks, choose an integer value!')
