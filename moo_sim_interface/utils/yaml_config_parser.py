@@ -55,7 +55,7 @@ def prepare_simulation_environment(args: dict):
         if not custom_build_path.is_absolute():
             custom_build_dir = os.path.join(os.getcwd(), custom_build_dir)
         else:
-            custom_build_dir = custom_build_path
+            custom_build_dir = custom_build_path.as_posix()
 
     return (model_filename, model_path, input_values, input_parameter_names, num_chunks, output_parameter_names,
             sync_execution, time_modulo, result_transformation, custom_build_dir)
