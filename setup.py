@@ -17,6 +17,7 @@ extras_require = {
     'optimization': ['paref', 'pymoo'],
     # 'dymola': ['dymola'],
     # 'openmodelica': ['OMPython'],
+
 }
 
 setup(name='moo_sim_interface',
