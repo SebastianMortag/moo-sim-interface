@@ -25,7 +25,7 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
     (model_filename, model_path, input_values, input_parameter_names, num_chunks, output_parameter_names,
      sync_execution, time_modulo, result_transformation, custom_build_dir) = prepare_simulation_environment(args)
 
-    post_simulation_data_processor = PostSimulationDataProcessor(args.get('post_simulation_options'), [])
+    post_simulation_data_processor = PostSimulationDataProcessor()
 
     transformation_option = args.get('simulation_setup').get('output_configuration').get('result_transformation')
     # TODO: generalize trajectory saving using yaml parser

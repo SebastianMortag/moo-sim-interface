@@ -83,9 +83,14 @@ def plot_results_plotly(data: list, input_values, sim_params: dict):
 
 
 class PostSimulationDataProcessor:
-    def __init__(self, post_simulation_options: dict, model_parameters: list):
+    def __init__(self, post_simulation_options: dict = None, model_parameters: list = None):
+        if post_simulation_options is None:
+            post_simulation_options = {}
+        if model_parameters is None:
+            model_parameters = []
+
         self.save_all_simulation_parameters = post_simulation_options.get(
-            'save_all_simulation_parameters')  # FIXME: Moved!
+            'save_all_simulation_parameters')  # TODO: Implement this functionality for other environments than FMU
 
         if self.save_all_simulation_parameters:
             if post_simulation_options.get('parameters_regex_filter') != 'None':

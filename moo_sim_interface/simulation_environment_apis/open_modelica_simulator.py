@@ -28,7 +28,7 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
         print('\033[93m' + 'Warning: The current version of OMPython is not supported. Upgrade to version 3.6.0 or '
                            'proceed at your own risk.' + '\033[0m')
 
-    post_simulation_data_processor = PostSimulationDataProcessor(args.get('post_simulation_options'), [])
+    post_simulation_data_processor = PostSimulationDataProcessor()
     pre_sim_scripts = args.get('pre_sim_scripts')
     post_sim_scripts = args.get('post_sim_scripts')
     sim_params = args.get('simulation_setup')

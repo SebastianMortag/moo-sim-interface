@@ -43,7 +43,7 @@ def run_fmu_simulation(return_results: bool = False, **kwargs) -> Union[None, li
     for parameter in model_description.modelVariables:
         value_references[parameter.name] = parameter.valueReference
 
-    post_simulation_data_processor = PostSimulationDataProcessor(kwargs.get('post_simulation_options'),
+    post_simulation_data_processor = PostSimulationDataProcessor(kwargs.get('fmu_settings'),
                                                                  model_description.modelVariables)
     all_value_references = post_simulation_data_processor.get_value_references()
     sim_params = kwargs.get('simulation_setup')

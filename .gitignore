@@ -163,5 +163,3 @@ cython_debug/
 /configs/transient_electricGrid_standAlone_ESS.yml
 /configs/openmodelica_parallel_example.yml
 /fmus/transient_ElectricGrid_StandAlone_ESS_Own.fmu
-/tmp.py
-/configs/transient_optimization.yml
