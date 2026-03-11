@@ -89,15 +89,18 @@ def run_simulation(return_results: bool = False, **args) -> Union[None, list]:
 def run_simulation_in_order(final_names, indices, initial_names, input_values, method, model, start_time, step_size,
                             stop_time, tolerance, flags, result_transformation) -> list[list]:
     combined_results = []
+
     for i in indices:
         initial_values = [values[i] for values in input_values]  # set the start values
 
         model.setParameters([f'{name}={value}' for name, value in zip(initial_names, initial_values)])
-        model.setSimulationOptions(
-            [f'startTime={start_time}', f'stopTime={stop_time}', f'stepSize={step_size}', f'solver={method}',
-             f'tolerance={tolerance}'])
-        model.simulate(simflags=flags)  # simflags='-noEventEmit'
-        # model.simulate(simflags='-lv=-assert,-stdout')  # simflags='-noEventEmit'
+
+        # Build simulation flags with timing parameters
+        sim_options = f'-startTime={start_time} -stopTime={stop_time} -stepSize={step_size} -tolerance={tolerance}'
+        if flags:
+            sim_options = f'{sim_options} {flags}'
+
+        model.simulate(simflags=sim_options)
         results = model.getSolutions(final_names)
 
         combined_results.append([(i, result_transformation(results))])
@@ -143,15 +146,16 @@ def simulate_model_worker(indices, final_names, initial_names, input_values, met
     for index in indices:
         initial_values = dict(zip(initial_names, [values[index] for values in input_values]))
         model.setParameters([f'{name}={value}' for name, value in initial_values.items()])
-        model.setSimulationOptions(
-            [f'startTime={start_time}', f'stopTime={stop_time}', f'stepSize={step_size}', f'solver={method}',
-             f'tolerance={tolerance}']
-        )
+
+        # Build simulation flags with timing parameters
+        sim_options = f'-startTime={start_time} -stopTime={stop_time} -stepSize={step_size} -tolerance={tolerance}'
+        if flags:
+            sim_options = f'{sim_options} {flags}'
 
         result_file = construct_resultfile_name(model_name, index)
 
         # Simulate the model
-        model.simulate(resultfile=result_file, simflags=flags)
+        model.simulate(resultfile=result_file, simflags=sim_options)
 
         # Retrieve results
         result = model.getSolutions(final_names)
